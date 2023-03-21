@@ -1,3 +1,3 @@
 # core
 
-Core orm management for fermerce
+user management for fermerce
