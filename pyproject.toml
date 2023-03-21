@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "src"
+version = "0.1.0"
+description = "core fermerce functionality"
+license = "Apache-2.0"
+authors = ["kokoserver <kokoserver20@hotmail.com>"]
+maintainers = [
+   "kokoserver <kokoserver20@hotmail.com>"
+]
+readme = "README.md"
+homepage = "https://github.com/fermerce/core"
+repository = "https://github.com/fermerce/core"
+documentation = "https://github.com/fermerce/core/docs"
+keywords = ["python", "ecommerce", "fastapi", "celery"]
+
+
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+fastapi = {extras = ["all"], version = "^0.95.0"}
+alembic = "^1.10.2"
+sqlalchemy = "^2.0.7"
+asyncpg = "^0.27.0"
+kombu = "^5.2.4"
+dramatiq = {extras = ["rabbitmq", "watch"], version = "^1.14.1"}
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+
+
+[tool.poetry.scripts]
+server = 'bootstrap:run_server'
+
+
+
+
+
+[tool.poetry.group.test.dependencies]
+pytest-asyncio = "^0.20.3"
+pytest = "^7.2.2"
+
+
+[tool.poetry.group.lint.dependencies]
+flake8 = "^6.0.0"
+
+
+[tool.poetry.group.format.dependencies]
+black = "^23.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
