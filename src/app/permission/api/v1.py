@@ -4,8 +4,8 @@ import uuid
 from fastapi import APIRouter, Query, status
 from src.app.permission import schema, service
 
-from src.lib.base.enum.sort_type import SortOrder
-from src.lib.base.schema.response import IBaseResponse
+from src._base.enum.sort_type import SortOrder
+from src._base.schema.response import IBaseResponse
 
 
 router = APIRouter(prefix="/permissions", tags=["Permissions"])
@@ -22,9 +22,12 @@ async def create_permission(
     return await service.create(data_in=data_in)
 
 
-@router.get("/", response_model=list[schema.IPermissionOut])
+@router.get(
+    "/",
+)
+# response_model=list[schema.IPermissionOut]
 async def get_permission_list(
-    # _: User = Depends(UserWrite.current_user_with_data),
+    # _: Customer = Depends(CustomerWrite.current_Customer_with_data),
     filter: t.Optional[str] = Query(
         default="", alias="filter", description="filter all address"
     ),

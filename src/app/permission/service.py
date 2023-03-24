@@ -1,7 +1,7 @@
 import uuid
 import typing as t
 from fastapi import status
-from src.lib.base.enum.sort_type import SortOrder
+from src._base.enum.sort_type import SortOrder
 from src.lib.errors import error
 from src.app.permission import schema, model
 from fastapi import Response

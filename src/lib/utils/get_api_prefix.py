@@ -1,4 +1,4 @@
-from src.lib.base.settings import config
+from src._base.settings import config
 
 
 def get_prefix():

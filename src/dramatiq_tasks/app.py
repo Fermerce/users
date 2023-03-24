@@ -5,7 +5,7 @@ from src.dramatiq_tasks._repository import consumer_list
 from src.dramatiq_tasks.config import connection
 from src.dramatiq_tasks.utils import discover
 from dramatiq.brokers.rabbitmq import RabbitmqBroker
-from src.lib.base.settings import config
+from src._base.settings import config
 
 # Set up the broker
 broker = RabbitmqBroker(url=config.get_broker_url(include_virtue=False))

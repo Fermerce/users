@@ -1088,7 +1088,7 @@ twisted = ["twisted"]
 [[package]]
 name = "platformdirs"
 version = "3.1.1"
-description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"Customer data dir\"."
 category = "dev"
 optional = false
 python-versions = ">=3.7"

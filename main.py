@@ -5,13 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 # from src.celery.tasks.example.tasks import mul
-from src.lib.base.settings import config
+from src._base.settings import config
 from src.lib.middleware.exclude_data_from_response import (
     exclude_keys_middleware,
 )
 from src.lib.middleware.response_formatter import response_data_transformer
-from src.lib.base.router import v1, admin_v1
-from src.lib.base.schema.response import IHealthCheck
+from src._base.router import v1, admin_v1
+from src._base.schema.response import IHealthCheck
 from src.dramatiq_tasks.tasks.example.tasks import process_data
 
 

@@ -8,7 +8,7 @@ from typing import Optional, List, Union
 import pydantic
 from src.lib.shared.mail import exception
 from src.lib.shared.mail import template_finder
-from src.lib.base.settings import config
+from src._base.settings import config
 
 from src.lib.errors import error
 
@@ -81,11 +81,14 @@ class Mailer(template_finder.MailTemplate):
             for attachment in self.attachments:
                 message.attach(attachment)
         try:
-            with smtplib.SMTP_SSL(host=self.email_host, port=self.email_server_port) as smtp:
+            with smtplib.SMTP_SSL(
+                host=self.email_host, port=self.email_server_port
+            ) as smtp:
                 smtp.login(
                     user=self.admin_email,
                     password=self.admin_password,
                 )
                 smtp.sendmail(from_email, email, message.as_string())
+            pass
         except Exception:
             raise error.ServerError("Could not connect to mail server")

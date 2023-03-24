@@ -2,7 +2,7 @@ import uuid
 import sqlalchemy as sa
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID
-from db.config import Model
+from src.lib.db.config import Model
 
 
 class GUID(TypeDecorator):

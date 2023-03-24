@@ -17,7 +17,7 @@ class Settings(pyd.BaseSettings):
     environment: str = os.getenv("ENVIRONMENT")
     backend_cors_origins: List[str] = os.getenv("BACKEND_CORS_ORIGINS")
     app_task_type: str = os.getenv("app_task_type", "direct")
-    app_name: str = os.getenv("APP_NAME", "user")
+    app_name: str = os.getenv("APP_NAME", "customer")
 
     # admin email settings
 
@@ -43,7 +43,7 @@ class Settings(pyd.BaseSettings):
     broker_port: int = os.getenv("BROKER_PORT")
     broker_user: str = os.getenv("BROKER_USER")
     broker_password: str = os.getenv("BROKER_PASSWORD")
-    broker_virtual_host: Optional[str] = os.getenv("BROKER_Virtual_HOST")
+    broker_virtual_host: Optional[str] = os.getenv("BROKER_VIRTUAL_HOST")
     broker_backend_result_url: str = os.getenv("BROKER_BACKEND_RESULT_URL")
     # JSON web token settings
     secret_key: str = os.getenv("SECRET_KEY")

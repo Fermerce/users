@@ -4,20 +4,7 @@ import pydantic as pyd
 from src.app.permission import schema as perm_schema
 
 
-class IUserOut(pyd.BaseModel):
-    id: uuid.UUID
-    firstname: str
-    lastname: str
-    email: pyd.EmailStr
-    tel: str
-    is_active: t.Optional[bool] = False
-    permissions: t.Optional[t.List[perm_schema.IPermissionOut]] = []
-
-    class Config:
-        orm_mode = True
-
-
-class IRegister(pyd.BaseModel):
+class IBaseStaff(pyd.BaseModel):
     firstname: pyd.constr(
         strip_whitespace=True,
         to_lower=True,
@@ -31,6 +18,9 @@ class IRegister(pyd.BaseModel):
         min_length=2,
     )
     email: pyd.EmailStr
+
+
+class IStaffIn(IBaseStaff):
     password: pyd.SecretStr
     tel: pyd.constr(
         regex=r"(\+234|0)?[789]\d{9}",
@@ -39,6 +29,17 @@ class IRegister(pyd.BaseModel):
         max_length=14,
         strict=True,
     )
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "firstname": "John",
+                "lastname": "Doe",
+                "email": "john@doe.com",
+                "password": "****************",
+                "tel": "08089223577",
+            }
+        }
 
     @pyd.validator("tel")
     def validate_phone_number(cls, v):
@@ -71,34 +72,53 @@ class IRegister(pyd.BaseModel):
             raise ValueError("Invalid Nigerian phone number")
         return v
 
+
+class IStaffOut(IBaseStaff):
+    id: str
+    roles: t.List[perm_schema.IPermissionOut]
+
     class Config:
+        orm_mode = True
         schema_extra = {
             "example": {
                 "firstname": "John",
                 "lastname": "Doe",
                 "email": "john@doe.com",
                 "password": "****************",
-                "tel": "+234567890890",
+                "tel": "08089223577",
+                "roles": ["admin", "dispatcher", "developer"],
+                "is_active": True,
+                "is_suspected": True,
+                "is_verified": True,
             }
         }
 
 
-class IGetPasswordResetLink(pyd.BaseModel):
+class IStaffGetPasswordResetLink(pyd.BaseModel):
     email: pyd.EmailStr
 
 
-class IUserAccountVerifyToken(pyd.BaseModel):
+class IStaffAccountVerifyToken(pyd.BaseModel):
     token: str
 
 
-class IResetForgetPassword(pyd.BaseModel):
+class IStaffResetForgetPassword(pyd.BaseModel):
     email: pyd.EmailStr
 
 
-class IUserPermissionUpdate(pyd.BaseModel):
+class IStaffRoleUpdate(pyd.BaseModel):
+    staff_id: str
     permissions: t.List[uuid.UUID]
 
 
-class IResetPassword(pyd.BaseModel):
+class IRemoveStaff(pyd.BaseModel):
+    staff_id: str
+    permanent: bool = False
+
+
+class IStaffResetPassword(pyd.BaseModel):
     token: str
+    password: pyd.SecretStr
+    
+class IStaffResetPasswordNoToken(pyd.BaseModel):
     password: pyd.SecretStr

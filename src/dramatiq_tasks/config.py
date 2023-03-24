@@ -1,5 +1,5 @@
 import kombu
-from src.lib.base.settings import config
+from src._base.settings import config
 from kombu import Exchange
 
 

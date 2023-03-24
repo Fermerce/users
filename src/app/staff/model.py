@@ -1,25 +1,26 @@
 from src.lib.db.primary_key import Base, sa
 from sqlalchemy.orm import relationship
-from src.app.user.password_hasher import Hasher
-from src.app.user.associate_model import user_to_permissions_association_table
+from src.lib.utils.password_hasher import Hasher
+from src.app.staff.associate_model import staff_role_association_table
+from src.lib.utils.random_string import random_str
 
 
-class User(Base):
-    __tablename__ = "user"
+class Staff(Base):
+    __tablename__ = "staff"
+    aud = sa.Column(sa.String(8), default=lambda: f"ST-{random_str(5)}")
     firstname = sa.Column(sa.String(20))
     lastname = sa.Column(sa.String(20))
     email = sa.Column(sa.String(50), unique=True)
     password = sa.Column(sa.String)
+    is_verified = sa.Column(sa.Boolean, default=False)
+    is_suspended = sa.Column(sa.Boolean, default=False)
+    is_active = sa.Column(sa.Boolean, default=False)
+    tel = sa.Column(sa.String(17))
     permissions = relationship(
         "Permission",
-        secondary=user_to_permissions_association_table,
-        back_populates="users",
+        secondary=staff_role_association_table,
+        back_populates="staff",
     )
-    tel = sa.Column(sa.String(17))
-    is_active = sa.Column(sa.Boolean, default=False)
-
-    def hash_password(self) -> str:
-        self.password = Hasher.hash_password(self.password)
 
     @staticmethod
     def generate_hash(password: str) -> str:

@@ -1,45 +1,21 @@
 import typing as t
+import jose
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-import jose
+from src._base.repository.base import BaseRepository
+from src.app.permission.model import Permission
 from src.lib.errors import error
-from core.settings import config as base_config
+from src._base.settings import config as base_config
 from src.lib.utils import get_api_prefix
-from src.app.user.model import User
-from src.app.user.repository import user_repo
-from src.app.permission.repository import permission_repo
+from src.lib.db.primary_key import Base
 
 
-async def get_user_data(
-    user_id: str,
-    load_related: bool = False,
-) -> t.Union[User, None]:
-    if user_id:
-        get_user: User = await user_repo.get(id=user_id, load_related=load_related)
-        if get_user.is_active:
-            return get_user
-        return None
-    return None
+Oauth_schema = OAuth2PasswordBearer(
+    tokenUrl=f"{get_api_prefix.get_prefix()}/auth/login"
+)
 
 
-async def get_user_permission(user_id: str, name: str) -> t.Union[User, None]:
-    if not user_id or not name:
-        return None
-    get_user = await get_user_data(user_id)
-    if not get_user:
-        raise error.UnauthorizedError("Authorization failed")
-    check_user_perm = await permission_repo.get_by_attr(attr=dict(name=name), first=True)
-    if not check_user_perm:
-        raise error.NotFoundError("Permission is not available")
-    if check_user_perm in get_user.permissions:
-        return get_user
-    return None
-
-
-Oauth_schema = OAuth2PasswordBearer(tokenUrl=f"{get_api_prefix.get_prefix()}/auth/login")
-
-
-class UserAuth:
+class AppAuth:
     @staticmethod
     async def authenticate(
         token: str = Depends(Oauth_schema),
@@ -58,62 +34,78 @@ class UserAuth:
 
             if payload is None:
                 raise credentials_exception
-            if not payload.get("user_id", None):
+            if not payload.get("id", None):
                 raise credentials_exception
             return payload
         except jose.JWTError:
             raise credentials_exception
 
 
-class UserWrite:
-    @staticmethod
-    async def is_admin(
-        user: dict = Depends(UserAuth.authenticate),
-    ) -> User:
-        admin_user = await get_user_permission(user_id=user.get("user_id", None), name="admin")
-        if admin_user:
-            return admin_user
-        raise error.ForbiddenError("Authorization failed")
+ModelType = t.TypeVar("ModelType", bound=Base)
 
-    @staticmethod
-    async def is_super_admin(
-        user: dict = Depends(UserAuth.authenticate),
-    ) -> User:
-        super_user = await get_user_permission(
-            user_id=user.get("user_id", None),
-            name="super_admin",
+
+class AppWrite(t.Generic[ModelType]):
+    def __init__(self, model: ModelType, model_repo: BaseRepository) -> None:
+        self.model = model
+        self.repo = model_repo
+
+    async def get_user_data(
+        self, user_id: str, load_related: bool = False
+    ) -> t.Union[ModelType, None]:
+        if user_id:
+            get_user: ModelType = await self.repo.get(
+                id=user_id, load_related=load_related
+            )
+            if get_user.is_active:
+                return get_user
+            raise error.UnauthorizedError("Authorization failed, account not active")
+        return error.UnauthorizedError("Authorization failed")
+
+    async def get_permissions(
+        self, db_column_name: str = "permissions", user_dict: t.Optional[dict] = None
+    ) -> ModelType:
+        check_user: ModelType = await self.get_user_data(
+            user_dict.get("id", None), load_related=True
         )
-        if super_user:
-            return super_user
-        raise error.ForbiddenError("Authorization failed")
+        if not check_user:
+            raise error.UnauthorizedError("Authorization failed")
+        if hasattr(check_user, db_column_name):
+            permissions: t.List[Permission] = getattr(check_user, db_column_name)
+            if not permissions:
+                raise error.AccessDenied()
+            return check_user
+        raise error.AccessDenied()
 
-    @staticmethod
-    async def super_or_admin(
-        user: dict = Depends(UserAuth.authenticate),
-    ) -> User:
-        super_user = await get_user_permission(
-            user_id=user.get("user_id", None),
-            name="super_admin",
+    async def require_permission(
+        self,
+        permissions: t.List[str],
+        db_column_name: str = "permissions",
+        user_dict: t.Optional[dict] = None,
+    ) -> t.Union[ModelType, None]:
+        check_user = await self.get_user_data(
+            user_id=user_dict.get("id", None), load_related=True
         )
-        admin_user = await get_user_permission(user_id=user.get("user_id", None), name="admin")
-        if super_user or admin_user:
-            return super_user
-        raise error.ForbiddenError("Authorization failed")
+        if not check_user:
+            raise error.UnauthorizedError("Authorization failed")
+        if hasattr(check_user, db_column_name):
+            permission_names: t.List[str] = [
+                perm.name for perm in getattr(check_user, db_column_name)
+            ]
+            if not [name for name in permission_names if name in permissions]:
+                raise error.AccessDenied()
+            return check_user
+        raise error.AccessDenied()
 
-    @staticmethod
-    async def current_user_with_data(
-        user: dict = Depends(UserAuth.authenticate),
-    ):
-        active_user = await get_user_data(user_id=user.get("user_id", None))
+    async def current_user_with_data(self, user_dict: t.Optional[dict] = None):
+        active_user: ModelType = await self.get_user_data(
+            user_id=user_dict.get("id", None), load_related=True
+        )
         if active_user:
             return active_user
         raise error.UnauthorizedError("Authorization failed")
 
-    @staticmethod
-    async def current_user(
-        user: dict = Depends(UserAuth.authenticate),
-    ):
-        user = await get_user_data(user_id=user.get("user_id", None), load_related=True)
+    async def current_user(self, user_dict: t.Optional[dict] = None):
+        user: ModelType = await self.get_user_data(user_id=user_dict.get("id", None))
 
         if user:
             return user

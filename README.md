@@ -1,3 +1,3 @@
 # core
 
-user management for fermerce
+Customer management for fermerce
