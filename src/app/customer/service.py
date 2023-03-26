@@ -20,8 +20,13 @@ async def create(data_in=schema.ICustomerIn):
         raise error.DuplicateError("Customer already exist")
     new_customer = await customer_repo.create(data_in)
     if new_customer:
-        tasks.send_activation_email.send(
-            customer=dict(email=new_customer.email, id=str(new_customer.id))
+        tasks.send_activation_email.send_with_options(
+            kwargs=dict(
+                email=new_customer.email,
+                id=str(new_customer.id),
+                full_name=f"{new_customer.firstname} {new_customer.lastname}",
+            ),
+            delay=5000,
         )
         return IResponseMessage(
             message="Account was created successfully, please check your email to activate your account"
@@ -64,6 +69,7 @@ async def verify_customer_email(
     customer_obj = await customer_repo.activate(customer_obj)
     if customer_obj:
         return IResponseMessage(message="Account was verified successfully")
+    raise error.ServerError("Could not activate account, please try again")
 
 
 async def reset_password_link(
@@ -71,16 +77,22 @@ async def reset_password_link(
 ) -> IResponseMessage:
     customer_obj = await customer_repo.get_by_email(email=data_in.email)
     if not customer_obj.is_verified:
-        tasks.send_activation_email.send(
-            customer=dict(email=customer_obj.email, id=str(customer_obj.id))
+        tasks.send_activation_email.send_with_options(
+            kwargs=dict(
+                email=customer_obj.email,
+                id=str(customer_obj.id),
+                full_name=f"{customer_obj.firstname} {customer_obj.lastname}",
+            ),
+            delay=5000,
         )
         return IResponseMessage(
             message="account need to be verified, before reset their password"
         )
     if not customer_obj:
         raise error.NotFoundError("Customer not found")
-    tasks.send_password_reset_link.send(
-        customer=dict(email=customer_obj.email, id=str(customer_obj.id))
+    tasks.send_password_reset_link.send_with_options(
+        kwargs=dict(email=customer_obj.email, id=str(customer_obj.id)),
+        delay=5000,
     )
     return IResponseMessage(
         message="Password reset token has been sent to your email, link expire after 24 hours"

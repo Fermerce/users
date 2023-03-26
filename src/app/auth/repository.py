@@ -8,22 +8,25 @@ class AuthTokeRepository(BaseRepository[model.AuthToken]):
         super().__init__(model.AuthToken)
 
     async def create(
-        self, user_id: str, request: Request, access_token: str, refresh_token: str
+        self,
+        user_id: str,
+        user_ip: str,
+        access_token: str,
+        refresh_token: str,
+        return_token: bool = False,
+        token_id: str = None,
     ) -> model.AuthToken:
-        user_ip: str = self.get_user_ip(request)
-
-        check_token = await super().get_by_attr(
-            attr=dict(ip_address=user_ip), first=True
-        )
-        if check_token:
+        if token_id:
             result = await super().update(
-                check_token.id,
+                token_id.id,
                 dict(
                     access_token=access_token,
                     refresh_token=refresh_token,
                 ),
             )
-            return result
+            if return_token:
+                return result
+            return
         new_auth_token = await super().create(
             dict(
                 access_token=access_token,
@@ -32,7 +35,8 @@ class AuthTokeRepository(BaseRepository[model.AuthToken]):
                 user_id=user_id,
             )
         )
-        return new_auth_token
+        if new_auth_token and return_token:
+            return new_auth_token
 
     def get_user_ip(self, request: Request) -> str:
         forwarded_for = request.headers.get("X-Forwarded-For")

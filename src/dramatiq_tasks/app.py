@@ -22,9 +22,9 @@ def run():
         try:
             for consumer in consumer_list:
                 consumer()
-            time.sleep(1)
         except connection.connection_errors:
             print("connection revived")
+            time.sleep(2)
         except KeyboardInterrupt:
             print("Stopping consumer thread")
             sys.exit(1)

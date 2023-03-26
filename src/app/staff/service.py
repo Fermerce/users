@@ -10,35 +10,28 @@ from src.lib.errors import error
 from src._base.settings import config
 from src.app.staff import schema, model
 from src.app.staff.repository import staff_repo
+from src.dramatiq_tasks.tasks.staff import tasks
 from src.app.permission.repository import permission_repo
 from src.lib.shared.mail.mailer import Mailer
 from src.lib.utils import security
 
 
 async def create(
-    background_tasks: BackgroundTasks,
     data_in=schema.IStaffIn,
 ):
     check_Staff = await staff_repo.get_by_email(data_in.email)
     if check_Staff:
         raise error.DuplicateError("Staff already exist")
     new_Staff = await staff_repo.create(data_in)
-    token: str = security.JWTAUTH.data_encoder(data={"staff_id": str(new_Staff.id)})
-    mail_template_context = {
-        "url": f"{config.project_url}/auth/activateAccount?activate_token={token}",
-        "button_label": "confirm",
-        "title": "Staff email confirmation link",
-        "description": f"""Welcome to <b>{config.project_name}</b>,
-            kindly click on the link below to activate your account""",
-    }
-
-    new_mail = Mailer(
-        website_name=config.project_name,
-        template_name="action.html",
-        subject="Email confirmation",
-        context=mail_template_context,
-    )
-    background_tasks.add_task(new_mail.send_mail, email=[new_Staff.email])
+    if new_Staff:
+        tasks.send_staff_activation_email.send_with_options(
+            kwargs=dict(
+                email=new_Staff.email,
+                id=str(new_Staff.id),
+                full_name=f"{new_Staff.firstname} {new_Staff.lastname}",
+            ),
+            delay=5000,
+        )
     return IResponseMessage(
         message="Account was created successfully, please check your email to activate your account"
     )
@@ -79,32 +72,24 @@ async def verify_staff_email(
     staff_obj = await staff_repo.activate(staff_obj)
     if staff_obj:
         return IResponseMessage(message="Account was verified successfully")
+    raise error.ServerError(
+        "couldn't activate account, please try again later. if error is persists please contact us"
+    )
 
 
 async def reset_password_link(
-    background_task: BackgroundTasks,
     staff_data: schema.IStaffGetPasswordResetLink,
 ) -> IResponseMessage:
     staff_obj = await staff_repo.get_by_email(email=staff_data.email)
     if not staff_obj:
         raise error.NotFoundError("Staff not found")
-    token = security.JWTAUTH.data_encoder(
-        data={"staff_id": str(staff_obj.id)},
-        duration=timedelta(days=1),
+    tasks.send_staff_password_reset_link.send_with_options(
+        kwargs=dict(
+            email=staff_obj.email,
+            id=str(staff_obj.id),
+            full_name=f"{staff_obj.firstname} {staff_obj.lastname}",
+        )
     )
-    mail_template_context = {
-        "url": f"{config.project_url}/auth/passwordReset?reset_token={token}",
-        "button_label": "reset password",
-        "title": "password reset link",
-        "description": "You request for password reset link, if not you please contact admin",
-    }
-    new_mail = Mailer(
-        website_name=config.project_name,
-        template_name="action.html",
-        context=mail_template_context,
-        subject="Password reset link",
-    )
-    background_task.add_task(new_mail.send_mail, email=[staff_obj.email])
     return IResponseMessage(
         message="Password reset token has been sent to your email, link expire after 24 hours"
     )
