@@ -16,15 +16,17 @@ keywords = ["python", "ecommerce", "fastapi", "celery"]
 
 
 [tool.poetry.dependencies]
-python = ">=3.9"
+python = ">=3.9,<4.0"
 fastapi = {extras = ["all"], version = "^0.95.0"}
 alembic = "^1.10.2"
 sqlalchemy = "^2.0.7"
 asyncpg = "^0.27.0"
 kombu = "^5.2.4"
-dramatiq = {extras = ["rabbitmq", "watch"], version = "^1.14.1"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+pip = "^23.0.1"
+taskiq-aio-pika = "^0.1.1"
+taskiq = { branch = "bugfix/windows-path", git = "https://github.com/taskiq-python/taskiq.git" }
 
 
 [tool.poetry.scripts]

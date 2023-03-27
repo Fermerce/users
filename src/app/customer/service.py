@@ -1,8 +1,7 @@
 import typing as t
-from datetime import timedelta
 import uuid
 from fastapi import status
-from fastapi import BackgroundTasks, Response
+from fastapi import Response
 from src._base.enum.sort_type import SortOrder
 from src._base.schema.response import ITotalCount, IResponseMessage
 from src.app.permission.model import Permission
@@ -10,7 +9,7 @@ from src.lib.errors import error
 from src.app.customer import schema, model
 from src.app.customer.repository import customer_repo
 from src.app.permission.repository import permission_repo
-from src.dramatiq_tasks.tasks.user import tasks
+from src.taskiq.user import tasks
 from src.lib.utils import security
 
 
@@ -20,8 +19,12 @@ async def create(data_in=schema.ICustomerIn):
         raise error.DuplicateError("Customer already exist")
     new_customer = await customer_repo.create(data_in)
     if new_customer:
-        tasks.send_activation_email.send(
-            customer=dict(email=new_customer.email, id=str(new_customer.id))
+        await tasks.send_activation_email.kicker().with_labels(delay=5).kiq(
+            dict(
+                email=new_customer.email,
+                id=str(new_customer.id),
+                full_name=f"{new_customer.firstname} {new_customer.lastname}",
+            )
         )
         return IResponseMessage(
             message="Account was created successfully, please check your email to activate your account"
@@ -64,6 +67,7 @@ async def verify_customer_email(
     customer_obj = await customer_repo.activate(customer_obj)
     if customer_obj:
         return IResponseMessage(message="Account was verified successfully")
+    raise error.ServerError("Could not activate account, please try again")
 
 
 async def reset_password_link(
@@ -71,16 +75,24 @@ async def reset_password_link(
 ) -> IResponseMessage:
     customer_obj = await customer_repo.get_by_email(email=data_in.email)
     if not customer_obj.is_verified:
-        tasks.send_activation_email.send(
-            customer=dict(email=customer_obj.email, id=str(customer_obj.id))
+        await tasks.send_activation_email.kicker().with_labels(delay=5).kiq(
+            dict(
+                email=customer_obj.email,
+                id=str(customer_obj.id),
+                full_name=f"{customer_obj.firstname} {customer_obj.lastname}",
+            )
         )
         return IResponseMessage(
             message="account need to be verified, before reset their password"
         )
     if not customer_obj:
         raise error.NotFoundError("Customer not found")
-    tasks.send_password_reset_link.send(
-        customer=dict(email=customer_obj.email, id=str(customer_obj.id))
+    tasks.send_password_reset_link.kiq(
+        dict(
+            email=customer_obj.email,
+            id=str(customer_obj.id),
+            full_name=f"{customer_obj.firstname} {customer_obj.lastname}",
+        )
     )
     return IResponseMessage(
         message="Password reset token has been sent to your email, link expire after 24 hours"

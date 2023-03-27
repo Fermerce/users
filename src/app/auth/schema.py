@@ -5,7 +5,7 @@ import pydantic as pyd
 class IToken(pyd.BaseModel):
     refresh_token: str
     access_token: str
-    token_type: str = "Bearer"
+    token_type: str = "bearer"
 
 
 class ICheckUserEmail(pyd.BaseModel):

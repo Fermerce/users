@@ -34,7 +34,7 @@ class AppAuth:
 
             if payload is None:
                 raise credentials_exception
-            if not payload.get("id", None):
+            if not payload.get("user_id", None):
                 raise credentials_exception
             return payload
         except jose.JWTError:
@@ -56,7 +56,7 @@ class AppWrite(t.Generic[ModelType]):
             get_user: ModelType = await self.repo.get(
                 id=user_id, load_related=load_related
             )
-            if get_user.is_active:
+            if get_user.is_verified:
                 return get_user
             raise error.UnauthorizedError("Authorization failed, account not active")
         return error.UnauthorizedError("Authorization failed")
@@ -65,7 +65,7 @@ class AppWrite(t.Generic[ModelType]):
         self, db_column_name: str = "permissions", user_dict: t.Optional[dict] = None
     ) -> ModelType:
         check_user: ModelType = await self.get_user_data(
-            user_dict.get("id", None), load_related=True
+            user_dict.get("user_id", None), load_related=True
         )
         if not check_user:
             raise error.UnauthorizedError("Authorization failed")
@@ -83,7 +83,7 @@ class AppWrite(t.Generic[ModelType]):
         user_dict: t.Optional[dict] = None,
     ) -> t.Union[ModelType, None]:
         check_user = await self.get_user_data(
-            user_id=user_dict.get("id", None), load_related=True
+            user_id=user_dict.get("user_id", None), load_related=True
         )
         if not check_user:
             raise error.UnauthorizedError("Authorization failed")
@@ -98,14 +98,16 @@ class AppWrite(t.Generic[ModelType]):
 
     async def current_user_with_data(self, user_dict: t.Optional[dict] = None):
         active_user: ModelType = await self.get_user_data(
-            user_id=user_dict.get("id", None), load_related=True
+            user_id=user_dict.get("user_id", None), load_related=True
         )
         if active_user:
             return active_user
         raise error.UnauthorizedError("Authorization failed")
 
     async def current_user(self, user_dict: t.Optional[dict] = None):
-        user: ModelType = await self.get_user_data(user_id=user_dict.get("id", None))
+        user: ModelType = await self.get_user_data(
+            user_id=user_dict.get("user_id", None)
+        )
 
         if user:
             return user
