@@ -1591,32 +1591,28 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyam
 
 [[package]]
 name = "taskiq"
-version = "0.3.2"
+version = "0.3.3"
 description = "Distributed task queue with full async support"
 category = "main"
 optional = false
-python-versions = "^3.7"
-files = []
-develop = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "taskiq-0.3.3-py3-none-any.whl", hash = "sha256:089c7c0cc46d62c994306a40f282e17f1ca165e9ac71a93a28d02a4809bc94e3"},
+    {file = "taskiq-0.3.3.tar.gz", hash = "sha256:af0d9503d76f948cc5a869fc0552e13f09d5fffd385e3554182a078860e2d2f6"},
+]
 
 [package.dependencies]
-gitignore-parser = "^0.1.0"
+gitignore-parser = ">=0.1.0,<0.2.0"
 importlib-metadata = "<4.3"
-pycron = "^3.0.0"
-pydantic = "^1.6.2"
-taskiq_dependencies = "^1"
+pycron = ">=3.0.0,<4.0.0"
+pydantic = ">=1.6.2,<2.0.0"
+taskiq_dependencies = ">=1,<2"
 typing-extensions = ">=3.10.0.0"
-watchdog = "^2.1.9"
+watchdog = ">=2.1.9,<3.0.0"
 
 [package.extras]
 uv = ["uvloop (>=0.16.0,<1)"]
 zmq = ["pyzmq (>=23.2.0,<24.0.0)"]
-
-[package.source]
-type = "git"
-url = "https://github.com/taskiq-python/taskiq.git"
-reference = "bugfix/windows-path"
-resolved_reference = "0aaa0fda3aa691a9a44d877bbcfa8ae10370a5b3"
 
 [[package]]
 name = "taskiq-aio-pika"
@@ -2086,4 +2082,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "30415955dd1b928218b3d7d65c13d1874f97cdd0a4e0a1011dc1733336cd72d4"
+content-hash = "da434ba96cfb231992bbe1e08e7e9762e960bc610bebc32c50682231638b046a"
