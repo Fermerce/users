@@ -13,13 +13,12 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     status_code=status.HTTP_200_OK,
 )
 async def auth_login(
-    background_task: BackgroundTasks,
     request: Request,
     data_in: OAuth2PasswordRequestForm = Depends(),
 ) -> t.Union[schema.IToken, IResponseMessage]:
-    return await service.auth_login(
-        background_task=background_task, data_in=data_in, request=request
-    )
+    result = await service.auth_login(data_in=data_in, request=request)
+    print(result)
+    return result
 
 
 @router.post(

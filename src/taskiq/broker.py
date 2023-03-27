@@ -1,20 +1,19 @@
 import sys
 import time
-import dramatiq
-from src.dramatiq_tasks._repository import consumer_list
-from src.dramatiq_tasks.config import connection
-from src.dramatiq_tasks.utils import discover
-from dramatiq.brokers.rabbitmq import RabbitmqBroker
+from src.taskiq._repository import consumer_list
+from src.taskiq.config import connection
 from src._base.settings import config
+from taskiq_aio_pika import AioPikaBroker
+
 
 # Set up the broker
-broker = RabbitmqBroker(url=config.get_broker_url(include_virtue=False))
-dramatiq.set_broker(broker)
+broker = AioPikaBroker(
+    url=config.get_broker_url(),
+    exchange_name=config.project_name.lower() if config.project_name else "taskiq",
+)
 
-actors = discover("./src/dramatiq_tasks/tasks")
 
-worker = dramatiq.Worker(broker=broker, worker_timeout=10000)
-worker.start()
+# from src.dramatiq_tasks.utils import discover
 
 
 def run():

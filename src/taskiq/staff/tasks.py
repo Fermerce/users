@@ -1,11 +1,11 @@
 from datetime import timedelta
-import dramatiq
+from src.taskiq.broker import broker
 from src.lib.shared.mail.mailer import Mailer
 from src.lib.utils import security
 from src._base.settings import config
 
 
-@dramatiq.actor
+@broker.task
 def send_staff_activation_email(staff: dict):
     token: str = security.JWTAUTH.data_encoder(data={"id": str(staff.get("id"))})
     url = f"{config.project_url}/auth/activateAccount?activate_token={token}&auth_type=staff"
@@ -29,7 +29,7 @@ def send_staff_activation_email(staff: dict):
     new_mail.send_mail(email=[staff.get("email")])
 
 
-@dramatiq.actor
+@broker.task
 def send_staff_password_reset_link(staff: dict):
     token = security.JWTAUTH.data_encoder(
         data={"id": str(staff.get("id"))},

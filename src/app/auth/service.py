@@ -1,12 +1,12 @@
 import typing as t
-from fastapi import BackgroundTasks, Request
+from fastapi import Request
 from fastapi.security.oauth2 import (
     OAuth2PasswordRequestForm,
 )
 from src.app.customer.model import Customer
 from src.app.customer.repository import customer_repo
-from src.dramatiq_tasks.tasks.auth.tasks import create_token
-from src.dramatiq_tasks.tasks.user.tasks import send_activation_email
+from src.taskiq.auth.tasks import create_token
+from src.taskiq.user.tasks import send_activation_email
 from src._base.schema.response import IResponseMessage
 from src.lib.errors import error
 from src.app.auth import schema
@@ -26,9 +26,8 @@ async def auth_login(
     if not check_user.check_password(data_in.password):
         raise error.UnauthorizedError(detail="incorrect email or password")
     if not check_user.is_verified:
-        send_activation_email.send_with_options(
-            dict(email=data_in.email, id=str(check_user.id)),
-            delay=5000,
+        await send_activation_email.kicker().kiq(
+            dict(email=data_in.email, id=str(check_user.id))
         )
         return IResponseMessage(
             message="Account is not verified, please check your email for verification link"
@@ -40,14 +39,11 @@ async def auth_login(
         )
         if access_token and refresh_token:
             user_ip = auth_token_repo.get_user_ip(request)
-            await create_token.send_with_options(
-                kwargs=dict(
-                    user_id=str(check_user.id),
-                    access_token=access_token,
-                    refresh_token=refresh_token,
-                    user_ip=user_ip,
-                ),
-                delay=5000,
+            await create_token.kiq(
+                user_id=str(check_user.id),
+                access_token=access_token,
+                refresh_token=refresh_token,
+                user_ip=user_ip,
             )
             return schema.IToken(refresh_token=refresh_token, access_token=access_token)
         raise error.ServerError("Count not authenticate user")
@@ -77,10 +73,12 @@ async def auth_login_token_refresh(
         return_token=True,
         token_id=check_auth_token.id,
     )
-    return schema.IToken(
-        access_token=new_token.access_token,
-        refresh_token=new_token.refresh_token,
-    )
+    if new_token:
+        return schema.IToken(
+            access_token=new_token.access_token,
+            refresh_token=new_token.refresh_token,
+        )
+    raise error.ServerError("could not create token, please try again")
 
 
 async def check_user_email(

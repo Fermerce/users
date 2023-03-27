@@ -3,8 +3,7 @@ import os
 import typing as t
 import socket
 import importlib.util
-import dramatiq
-from src.dramatiq_tasks.config import connection
+from src.taskiq.config import connection
 import kombu
 
 
@@ -71,7 +70,7 @@ def discover(directory, recursive=True):
                 module_spec.loader.exec_module(module)
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if isinstance(attr, dramatiq.Actor):
+                    if isinstance(attr, ):
                         actors.append(attr)
         if not recursive:
             break

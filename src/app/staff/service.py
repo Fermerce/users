@@ -1,18 +1,15 @@
 import typing as t
 import uuid
-from datetime import timedelta
 from fastapi import status
-from fastapi import BackgroundTasks, Response
+from fastapi import Response
 from src._base.enum.sort_type import SortOrder
 from src._base.schema.response import ITotalCount, IResponseMessage
 from src.app.permission.model import Permission
 from src.lib.errors import error
-from src._base.settings import config
 from src.app.staff import schema, model
 from src.app.staff.repository import staff_repo
-from src.dramatiq_tasks.tasks.staff import tasks
+from src.taskiq.staff import tasks
 from src.app.permission.repository import permission_repo
-from src.lib.shared.mail.mailer import Mailer
 from src.lib.utils import security
 
 
@@ -24,13 +21,12 @@ async def create(
         raise error.DuplicateError("Staff already exist")
     new_Staff = await staff_repo.create(data_in)
     if new_Staff:
-        tasks.send_staff_activation_email.send_with_options(
-            kwargs=dict(
+        await tasks.send_staff_activation_email.kicker().with_labels(delay=5).kiq(
+            dict(
                 email=new_Staff.email,
                 id=str(new_Staff.id),
                 full_name=f"{new_Staff.firstname} {new_Staff.lastname}",
-            ),
-            delay=5000,
+            )
         )
     return IResponseMessage(
         message="Account was created successfully, please check your email to activate your account"
@@ -83,8 +79,8 @@ async def reset_password_link(
     staff_obj = await staff_repo.get_by_email(email=staff_data.email)
     if not staff_obj:
         raise error.NotFoundError("Staff not found")
-    tasks.send_staff_password_reset_link.send_with_options(
-        kwargs=dict(
+    await tasks.send_staff_password_reset_link.kicker().with_labels(delay=5).kiq(
+        dict(
             email=staff_obj.email,
             id=str(staff_obj.id),
             full_name=f"{staff_obj.firstname} {staff_obj.lastname}",

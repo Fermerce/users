@@ -1,4 +1,4 @@
-from src.dramatiq_tasks.utils import message_ack
+from src.taskiq.utils import message_ack
 
 
 @message_ack

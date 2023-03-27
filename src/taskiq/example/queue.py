@@ -1,5 +1,5 @@
 from kombu import Queue
-from src.dramatiq_tasks.config import exchange
+from src.taskiq.config import exchange
 
 
 test_queue = Queue(

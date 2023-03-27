@@ -1,9 +1,8 @@
-import dramatiq
-
+from src.taskiq.broker import broker
 from src.app.auth.repository import auth_token_repo
 
 
-@dramatiq.actor
+@broker.task
 async def create_token(
     user_ip: str, refresh_token: str, access_token: str, user_id: str
 ):
