@@ -12,7 +12,8 @@ async def transform(s: t.Union[str, bytearray, bytes], status_code: int):
         try:
             data: dict = json.loads(s)
             if isinstance(data, dict) and len(list(data.keys())) == 1:
-                response_data["data"] = ",".join(list(data.values()))
+                response_data["data"] = data
+                # response_data["data"] = ",".join(list(data.values()))
             else:
                 response_data["data"] = data
         except Exception:

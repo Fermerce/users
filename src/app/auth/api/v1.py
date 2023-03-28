@@ -17,7 +17,7 @@ async def auth_login(
     data_in: OAuth2PasswordRequestForm = Depends(),
 ) -> t.Union[schema.IToken, IResponseMessage]:
     result = await service.auth_login(data_in=data_in, request=request)
-    print(result)
+
     return result
 
 

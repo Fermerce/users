@@ -15,18 +15,15 @@ router = APIRouter(prefix="/staff", tags=["Staff"])
     "/",
     status_code=status.HTTP_201_CREATED,
     response_model=IResponseMessage,
-    dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
-async def create_staff(
-    data_in: schema.IStaffIn,
-    background_task: BackgroundTasks,
-) -> IResponseMessage:
-    return await service.create(background_tasks=background_task, data_in=data_in)
+async def create_staff(data_in: schema.IStaffIn) -> IResponseMessage:
+    return await service.create(data_in=data_in)
 
 
 @router.get(
     "/",
-    dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_staff_list(
     filter: t.Optional[str] = Query(
@@ -59,7 +56,7 @@ async def get_staff_list(
 @router.get(
     "/total/count",
     response_model=ITotalCount,
-    dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_total_staff() -> ITotalCount:
     return await service.get_total_Staffs()
@@ -68,7 +65,7 @@ async def get_total_staff() -> ITotalCount:
 @router.get(
     "/{staff_id}/permissions",
     response_model=t.List[IPermissionOut],
-    dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_staff_permissions(
     staff_id: uuid.UUID,
@@ -77,9 +74,9 @@ async def get_staff_permissions(
 
 
 @router.put(
-    "/{staff_id}/permissions",
+    "/permissions",
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def update_staff_permissions(
     data_in: schema.IStaffRoleUpdate,
@@ -88,12 +85,9 @@ async def update_staff_permissions(
 
 
 @router.delete(
-    "/{staff_id}/permissions",
+    "/permissions",
     status_code=status.HTTP_200_OK,
-    dependencies=[
-        Depends(dependency.require_super_admin),
-        Depends(AppAuth.authenticate),
-    ],
+    # dependencies=[Depends(dependency.require_super_admin)],
 )
 async def remove_staff_permissions(
     data_in: schema.IStaffRoleUpdate,
@@ -104,7 +98,7 @@ async def remove_staff_permissions(
 @router.delete(
     "/",
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(dependency.require_super_admin)],
+    # dependencies=[Depends(dependency.require_super_admin)],
 )
 async def delete_staff(data_in: schema.IRemoveStaff) -> None:
     return await service.remove_staff_data(data_in)
@@ -112,12 +106,12 @@ async def delete_staff(data_in: schema.IRemoveStaff) -> None:
 
 @router.get(
     "/{staff_id}",
-    response_model=schema.IStaffOut,
+    response_model=t.Union[schema.IStaffOutFull, schema.IStaffOut],
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_staff(
     staff_id: uuid.UUID,
     load_related: bool = False,
-) -> schema.IStaffOut:
+) -> t.Union[schema.IStaffOutFull, schema.IStaffOut]:
     return await service.get_staff(staff_id, load_related)

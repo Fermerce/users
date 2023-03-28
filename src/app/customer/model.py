@@ -10,6 +10,7 @@ class Customer(Base):
     lastname = sa.Column(sa.String(20))
     email = sa.Column(sa.String(50), unique=True)
     password = sa.Column(sa.String)
+    password_reset_token = sa.Column(sa.String, default=None)
     permissions = relationship(
         "Permission",
         secondary=customer_permission_association_table,

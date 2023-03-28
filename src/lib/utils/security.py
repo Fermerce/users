@@ -16,16 +16,17 @@ class JWTAUTH:
             else:
                 secret_key = secret_key
             payload = jwt.decode(
-                encoded_data,
-                secret_key,
-                [config.algorithm],
+                token=encoded_data,
+                key=secret_key,
+                algorithms=[config.algorithm],
             )
+
             if payload:
                 return payload
-            raise error.UnauthorizedError()
+            raise error.UnauthorizedError("Invalid token provided")
 
         except JWTError:
-            raise error.UnauthorizedError()
+            raise error.UnauthorizedError("Invalid token provided")
 
     @staticmethod
     def data_encoder(

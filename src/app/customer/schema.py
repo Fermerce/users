@@ -53,6 +53,26 @@ class ICustomerOut(IBaseCustomer):
         }
 
 
+class ICustomerOutFull(IBaseCustomer):
+    id: uuid.UUID
+    is_active: t.Optional[bool] = False
+    is_suspended: t.Optional[bool] = False
+    is_verified: t.Optional[bool] = False
+    permissions: t.Optional[t.List[perm_schema.IPermissionOut]] = []
+
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "id": "2345678-1234-1234-1234-123456789abc",
+                "firstname": "John",
+                "lastname": "Doe",
+                "email": "john@doe.com",
+                "password": "****************",
+            }
+        }
+
+
 class IGetPasswordResetLink(pyd.BaseModel):
     email: pyd.EmailStr
 
@@ -78,6 +98,7 @@ class ICustomerRemove(pyd.BaseModel):
 class ICustomerResetPassword(pyd.BaseModel):
     token: str
     password: pyd.SecretStr
-    
+
+
 class ICustomerResetPasswordNoToken(pyd.BaseModel):
     password: pyd.SecretStr

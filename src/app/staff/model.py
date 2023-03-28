@@ -15,6 +15,7 @@ class Staff(Base):
     is_verified = sa.Column(sa.Boolean, default=False)
     is_suspended = sa.Column(sa.Boolean, default=False)
     is_active = sa.Column(sa.Boolean, default=False)
+    password_reset_token = sa.Column(sa.String, default=None)
     tel = sa.Column(sa.String(17))
     permissions = relationship(
         "Permission",
