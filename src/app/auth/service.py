@@ -33,9 +33,7 @@ async def auth_login(
         )
     else:
         get_jwt_data_for_encode = schema.IToEncode(user_id=str(check_user.id))
-        access_token, refresh_token = JWTAUTH.jwt_encoder(
-            data=get_jwt_data_for_encode.dict()
-        )
+        access_token, refresh_token = JWTAUTH.jwt_encoder(data=get_jwt_data_for_encode.dict())
         if access_token and refresh_token:
             user_ip = auth_token_repo.get_user_ip(request)
             check_token = await auth_token_repo.get_by_attr(
@@ -49,9 +47,7 @@ async def auth_login(
                     user_ip=user_ip,
                     token_id=check_token.id,
                 )
-                return schema.IToken(
-                    refresh_token=refresh_token, access_token=access_token
-                )
+                return schema.IToken(refresh_token=refresh_token, access_token=access_token)
             await create_token.kicker().with_labels(delay=5).kiq(
                 user_id=str(check_user.id),
                 access_token=access_token,

@@ -40,9 +40,7 @@ async def send_customer_password_reset_link(customer: dict):
         token = security.JWTAUTH.data_encoder(
             data={"user_id": user_id}, duration=timedelta(days=1)
         )
-        result = await customer_repo.update(
-            customer=get_user, obj={"password_reset_token": token}
-        )
+        customer_repo.update(customer=get_user, obj={"password_reset_token": token})
         url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=customer"
 
         mail_template_context = {

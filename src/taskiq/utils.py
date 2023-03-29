@@ -70,7 +70,9 @@ def discover(directory, recursive=True):
                 module_spec.loader.exec_module(module)
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if isinstance(attr, ):
+                    if isinstance(
+                        attr,
+                    ):
                         actors.append(attr)
         if not recursive:
             break

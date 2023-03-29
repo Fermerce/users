@@ -77,13 +77,9 @@ class BaseRepository(t.Generic[ModelType]):
         elif isinstance(prop_column.type, sa.types.DateTime):
             prop_values = [datetime.datetime.fromisoformat(v) for v in prop_values]
         elif isinstance(prop_column.type, sa.types.Date):
-            prop_values = [
-                datetime.datetime.strptime(v, "%Y-%m-%d").date() for v in prop_values
-            ]
+            prop_values = [datetime.datetime.strptime(v, "%Y-%m-%d").date() for v in prop_values]
         elif isinstance(prop_column.type, sa.types.Time):
-            prop_values = [
-                datetime.datetime.strptime(v, "%H:%M:%S").time() for v in prop_values
-            ]
+            prop_values = [datetime.datetime.strptime(v, "%H:%M:%S").time() for v in prop_values]
         elif isinstance(prop_column.type, sa.types.Boolean):
             prop_values = [True if v.lower() == "true" else False for v in prop_values]
         elif isinstance(prop_column.type, sa.types.UUID):
@@ -128,9 +124,7 @@ class BaseRepository(t.Generic[ModelType]):
         return result.scalar_one_or_none()
 
     async def delete(self, id: UUID, expunge: bool = True) -> t.Optional[ModelType]:
-        result = await self.db.execute(
-            sa.select(self.model).where(self.model.id == str(id))
-        )
+        result = await self.db.execute(sa.select(self.model).where(self.model.id == str(id)))
         row = result.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Object not found")
@@ -159,9 +153,7 @@ class BaseRepository(t.Generic[ModelType]):
         count = result.scalar()
         return count if count is not None else None
 
-    async def create(
-        self, obj: t.Union[dict, BaseModel], expunge: bool = True
-    ) -> ModelType:
+    async def create(self, obj: t.Union[dict, BaseModel], expunge: bool = True) -> ModelType:
         to_create = {}
         if isinstance(obj, BaseModel):
             to_create = obj.dict()
@@ -169,9 +161,7 @@ class BaseRepository(t.Generic[ModelType]):
             to_create = obj
         if not to_create:
             raise ValueError("Cannot create empty object")
-        to_create_filtered = {
-            k: v for k, v in to_create.items() if hasattr(self.model, k)
-        }
+        to_create_filtered = {k: v for k, v in to_create.items() if hasattr(self.model, k)}
         try:
             result = self.model(**to_create_filtered)
             self.db.add(result)
@@ -196,9 +186,7 @@ class BaseRepository(t.Generic[ModelType]):
             if isinstance(obj, BaseModel):
                 new_obj = obj.dict(exclude_unset=True)
                 filtered_obj = {
-                    key: value
-                    for key, value in new_obj.items()
-                    if hasattr(self.model, key)
+                    key: value for key, value in new_obj.items() if hasattr(self.model, key)
                 }
                 to_create_list.append(filtered_obj)
 
@@ -234,17 +222,12 @@ class BaseRepository(t.Generic[ModelType]):
             valid_keys = [key for key in attr.keys() if hasattr(self.model, key)]
             attr_filtered = {key: attr[key] for key in valid_keys}
 
-            filters = [
-                getattr(self.model, key) == value
-                for key, value in attr_filtered.items()
-            ]
+            filters = [getattr(self.model, key) == value for key, value in attr_filtered.items()]
 
             stmt = None
             if load_related:
                 stmt = (
-                    sa.select(self.model)
-                    .options(sa.orm.selectinload("*"))
-                    .where(sa.and_(*filters))
+                    sa.select(self.model).options(sa.orm.selectinload("*")).where(sa.and_(*filters))
                 )
             else:
                 stmt = sa.select(self.model).where(sa.and_(*filters))
@@ -303,17 +286,13 @@ class BaseRepository(t.Generic[ModelType]):
                     if filter_condition is None:
                         filter_condition = column.ilike(f"%{filter_string}%")
                     else:
-                        filter_condition = filter_condition | column.ilike(
-                            f"%{filter_string}%"
-                        )
+                        filter_condition = filter_condition | column.ilike(f"%{filter_string}%")
             if filter_condition is not None:
                 select_obj = select_obj.where(filter_condition)
 
         if select_columns:
             select_list = [
-                getattr(self.model, col)
-                for col in select_columns
-                if hasattr(self.model, col)
+                getattr(self.model, col) for col in select_columns if hasattr(self.model, col)
             ]
 
             if select_list:
@@ -329,9 +308,7 @@ class BaseRepository(t.Generic[ModelType]):
                 elif hasattr(self.model, column) and sort_by == SortOrder.asc:
                     select_obj = select_obj.order_by(getattr(self.model, column))
 
-        results = await self.db.execute(
-            select_obj.limit(per_page).offset((page - 1) * per_page)
-        )
+        results = await self.db.execute(select_obj.limit(per_page).offset((page - 1) * per_page))
         if expunge:
             self.db.expunge_all()
         return [row._asdict() for row in results]

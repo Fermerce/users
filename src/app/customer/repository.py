@@ -97,9 +97,7 @@ class CustomerRepository(BaseRepository[model.Customer]):
         await self.db.commit()
         return customer
 
-    async def activate(
-        self, customer: model.Customer, mode: bool = True
-    ) -> model.Customer:
+    async def activate(self, customer: model.Customer, mode: bool = True) -> model.Customer:
         customer.is_active = mode
         customer.is_verified = mode
         customer.is_suspended = mode
@@ -107,9 +105,7 @@ class CustomerRepository(BaseRepository[model.Customer]):
         await self.db.commit()
         return customer
 
-    async def delete(
-        self, customer: model.Customer, permanent: bool = False
-    ) -> model.Customer:
+    async def delete(self, customer: model.Customer, permanent: bool = False) -> model.Customer:
         if permanent:
             await super().delete(id=str(customer.id))
             return True

@@ -85,9 +85,7 @@ async def reset_password_link(
                 full_name=f"{customer_obj.firstname} {customer_obj.lastname}",
             )
         )
-        return IResponseMessage(
-            message="account need to be verified, before reset their password"
-        )
+        return IResponseMessage(message="account need to be verified, before reset their password")
     if not customer_obj:
         raise error.NotFoundError("Customer not found")
     await tasks.send_customer_password_reset_link.kicker().with_labels(delay=2).kiq(
@@ -115,9 +113,7 @@ async def update_customer_password(
         if customer_obj.check_password(data_in.password.get_secret_value()):
             raise error.BadDataError("Try another password you have not used before")
         if await customer_repo.update_password(customer_obj, data_in):
-            await tasks.send_verify_customer_password_reset.kicker().with_labels(
-                delay=2
-            ).kiq(
+            await tasks.send_verify_customer_password_reset.kicker().with_labels(delay=2).kiq(
                 dict(
                     email=customer_obj.email,
                     id=str(customer_obj.id),
@@ -152,13 +148,9 @@ async def update_customer_password_no_token(
 async def remove_customer_data(data_in: schema.ICustomerRemove) -> None:
     customer_to_remove = await customer_repo.get(data_in.customer_id)
     if customer_to_remove:
-        await customer_repo.delete(
-            customer=customer_to_remove, permanent=data_in.permanent
-        )
+        await customer_repo.delete(customer=customer_to_remove, permanent=data_in.permanent)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
-    raise error.NotFoundError(
-        f"Customer with customer id {data_in.customer_id} does not exist"
-    )
+    raise error.NotFoundError(f"Customer with customer id {data_in.customer_id} does not exist")
 
 
 async def get_customers(
@@ -181,9 +173,7 @@ async def get_total_customers():
     return ITotalCount(count=total_count).dict()
 
 
-async def get_customer(
-    customer_id: uuid.UUID, load_related: bool = False
-) -> model.Customer:
+async def get_customer(customer_id: uuid.UUID, load_related: bool = False) -> model.Customer:
     if not customer_id:
         raise error.NotFoundError(
             f"Customer with customer id {customer_id} does not exist",
@@ -213,9 +203,7 @@ async def get_customer_permissions(customer_id: uuid.UUID) -> t.List[Permission]
 async def add_customer_permissions(
     data_in: schema.ICustomerRoleUpdate,
 ) -> IResponseMessage:
-    get_per = await permission_repo.get_by_props(
-        prop_name="id", prop_values=data_in.permissions
-    )
+    get_per = await permission_repo.get_by_props(prop_name="id", prop_values=data_in.permissions)
     if not get_per:
         raise error.NotFoundError("permission not found")
     update_customer = await customer_repo.add_customer_permission(

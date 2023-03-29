@@ -1,8 +1,7 @@
 import typing as t
-from fastapi import APIRouter, BackgroundTasks, Depends, status
-from src.app.staff import schema, service, model
+from fastapi import APIRouter, Depends, status
 from src._base.schema.response import IResponseMessage
-from src.app.staff import schema, service, dependency
+from src.app.staff import schema, service, dependency, model
 from src.lib.errors import error
 
 router = APIRouter(prefix="/staff", tags=["Staff"])

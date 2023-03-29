@@ -126,9 +126,7 @@ async def update_staff_password_tno_token(
     if staff_obj.check_password(staff_data.password.get_secret_value()):
         raise error.BadDataError("Try another password you have not used before")
     if await staff_repo.update_password(staff_obj, staff_data):
-        await tasks.send_verify_staff_password_reset.kicker().with_labels(
-            delay=3, priority=4
-        ).kiq(
+        await tasks.send_verify_staff_password_reset.kicker().with_labels(delay=3, priority=4).kiq(
             dict(
                 email=staff_obj.email,
                 id=str(staff_obj.id),
@@ -152,7 +150,7 @@ async def get_staff(
 ) -> t.Union[schema.IStaffOutFull, schema.IStaffOut]:
     if not staff_id:
         raise error.NotFoundError(
-            f"staff  with customer does not exist",
+            "staff  with customer does not exist",
         )
     staffs = await staff_repo.get(staff_id, load_related=load_related)
     if staffs:
@@ -187,9 +185,7 @@ async def add_staff_permission(
     get_staff = await staff_repo.get(data_in.staff_id)
     if not get_staff:
         raise error.NotFoundError("Staff not found")
-    get_perms = await permission_repo.get_by_props(
-        prop_name="id", prop_values=data_in.permissions
-    )
+    get_perms = await permission_repo.get_by_props(prop_name="id", prop_values=data_in.permissions)
     if not get_perms:
         raise error.NotFoundError("permissions not found")
     update_Staff = await staff_repo.add_staff_permissions(
@@ -218,7 +214,5 @@ async def remove_staff_permissions(
     check_perms = await permission_repo.get_by_ids(data_in.permissions)
     if not check_perms:
         raise error.NotFoundError(detail=" Permission not found")
-    await staff_repo.remove_staff_permission(
-        staff_id=get_staff.id, permission_objs=check_perms
-    )
+    await staff_repo.remove_staff_permission(staff_id=get_staff.id, permission_objs=check_perms)
     return IResponseMessage(message="Staff role was updated successfully")

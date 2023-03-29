@@ -25,9 +25,7 @@ async def transform(s: t.Union[str, bytearray, bytes], status_code: int):
     if status_code == status.HTTP_422_UNPROCESSABLE_ENTITY:
         try:
             data: dict = json.loads(s)
-            response_data["error"] = {
-                k.get("loc")[-1]: k.get("msg") for k in data["detail"]
-            }
+            response_data["error"] = {k.get("loc")[-1]: k.get("msg") for k in data["detail"]}
         except Exception:
             response_data["error"] = s
         finally:
