@@ -1,23 +1,33 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, status
-from src.app.staff import schema, service, model
+import typing as t
+from fastapi import APIRouter, Depends, status
 from src._base.schema.response import IResponseMessage
-from src.app.staff import schema, service, dependency
+from src.app.staff import schema, service, dependency, model
+from src.lib.errors import error
 
 router = APIRouter(prefix="/staff", tags=["Staff"])
 
 
-@router.get("/me", response_model=schema.IStaffOut, status_code=status.HTTP_200_OK)
+@router.get(
+    "/me",
+    response_model=t.Union[schema.IStaffOutFull, schema.IStaffOut],
+    status_code=status.HTTP_200_OK,
+)
 async def get_staff_current_data(
-    staff_data: model.Staff = Depends(dependency.require_staff_data_all),
-) -> schema.IStaffOut:
-    return staff_data
+    staff_data: dict = Depends(dependency.AppAuth.authenticate),
+    load_related: bool = False,
+) -> t.Union[schema.IStaffOutFull, schema.IStaffOut]:
+    if not staff_data.get("staff_id", None):
+        raise error.UnauthorizedError()
+    return await service.get_staff(
+        staff_id=staff_data.get("staff_id", None), load_related=load_related
+    )
 
 
 @router.post("/password/reset-link", status_code=status.HTTP_200_OK)
 async def reset_password_link(
-    staff_data: schema.IStaffGetPasswordResetLink, background_task: BackgroundTasks
+    staff_data: schema.IStaffGetPasswordResetLink,
 ) -> IResponseMessage:
-    return await service.reset_password_link(background_task, staff_data)
+    return await service.reset_password_link(staff_data)
 
 
 @router.post("/verify-email", status_code=status.HTTP_200_OK)

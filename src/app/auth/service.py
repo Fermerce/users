@@ -3,10 +3,9 @@ from fastapi import Request
 from fastapi.security.oauth2 import (
     OAuth2PasswordRequestForm,
 )
-from src.app.customer.model import Customer
 from src.app.customer.repository import customer_repo
 from src.taskiq.auth.tasks import create_token
-from src.taskiq.user.tasks import send_activation_email
+from src.taskiq.user.tasks import send_customer_activation_email
 from src._base.schema.response import IResponseMessage
 from src.lib.errors import error
 from src.app.auth import schema
@@ -26,7 +25,7 @@ async def auth_login(
     if not check_user.check_password(data_in.password):
         raise error.UnauthorizedError(detail="incorrect email or password")
     if not check_user.is_verified:
-        await send_activation_email.kicker().kiq(
+        await send_customer_activation_email.kicker().kiq(
             dict(email=data_in.email, id=str(check_user.id))
         )
         return IResponseMessage(
@@ -34,12 +33,22 @@ async def auth_login(
         )
     else:
         get_jwt_data_for_encode = schema.IToEncode(user_id=str(check_user.id))
-        access_token, refresh_token = JWTAUTH.jwt_encoder(
-            data=get_jwt_data_for_encode.dict()
-        )
+        access_token, refresh_token = JWTAUTH.jwt_encoder(data=get_jwt_data_for_encode.dict())
         if access_token and refresh_token:
             user_ip = auth_token_repo.get_user_ip(request)
-            await create_token.kiq(
+            check_token = await auth_token_repo.get_by_attr(
+                attr=dict(user_id=str(check_user.id), user_ip=user_ip), first=True
+            )
+            if check_token:
+                await create_token.kicker().with_labels(delay=5).kiq(
+                    user_id=str(check_user.id),
+                    access_token=access_token,
+                    refresh_token=refresh_token,
+                    user_ip=user_ip,
+                    token_id=check_token.id,
+                )
+                return schema.IToken(refresh_token=refresh_token, access_token=access_token)
+            await create_token.kicker().with_labels(delay=5).kiq(
                 user_id=str(check_user.id),
                 access_token=access_token,
                 refresh_token=refresh_token,
@@ -83,9 +92,9 @@ async def auth_login_token_refresh(
 
 async def check_user_email(
     data_in: schema.ICheckUserEmail,
-    user_repo: BaseRepository = Customer,
+    user_repo: BaseRepository = customer_repo,
 ) -> IResponseMessage:
-    check_user: ModelType = await user_repo.get_by_email(email=data_in.email)
+    check_user = await user_repo.get_by_email(email=data_in.email)
     if not check_user:
         raise error.NotFoundError()
     return IResponseMessage(message="Account exists")

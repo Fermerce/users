@@ -14,9 +14,7 @@ class PermissionRepository(BaseRepository[model.Permission,]):
         get_cats = await self.db.execute(stm)
         return get_cats.scalars().all()
 
-    async def get_by_names(
-        self, Customers: t.List[Customer]
-    ) -> t.List[model.Permission]:
+    async def get_by_names(self, Customers: t.List[Customer]) -> t.List[model.Permission]:
         stm = select(self.model).where(self.model.Customers.in_(Customers))
         get_cats = await self.db.execute(stm)
         return get_cats.scalars().all()

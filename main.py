@@ -8,7 +8,6 @@ from src.lib.middleware.exclude_data_from_response import (
 from src.lib.middleware.response_formatter import response_data_transformer
 from src._base.router import v1, admin_v1
 from src._base.schema.response import IHealthCheck
-from src.taskiq.example.tasks import process_data
 
 
 def get_application():
@@ -48,13 +47,6 @@ async def start_broker():
 
 @app.get("/", response_model=IHealthCheck, tags=["Health status"])
 async def health_check():
-    await process_data.kicker().with_labels(delay=5).kiq(
-        data=IHealthCheck(
-            name=config.project_name,
-            version=config.project_version,
-            description=config.project_description,
-        ).dict()
-    )
     return IHealthCheck(
         name=config.project_name,
         version=config.project_version,

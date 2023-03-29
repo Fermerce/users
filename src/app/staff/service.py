@@ -21,8 +21,8 @@ async def create(
         raise error.DuplicateError("Staff already exist")
     new_Staff = await staff_repo.create(data_in)
     if new_Staff:
-        await tasks.send_staff_activation_email.kicker().with_labels(delay=5).kiq(
-            dict(
+        await tasks.send_staff_activation_email.kicker().with_labels(delay=1).kiq(
+            staff=dict(
                 email=new_Staff.email,
                 id=str(new_Staff.id),
                 full_name=f"{new_Staff.firstname} {new_Staff.lastname}",
@@ -55,13 +55,13 @@ async def filter(
 
 
 async def verify_staff_email(
-    Staff_token: schema.IStaffAccountVerifyToken,
+    staff_token: schema.IStaffAccountVerifyToken,
 ) -> IResponseMessage:
-    data: dict = security.JWTAUTH.data_decoder(encoded_data=Staff_token.token)
+    data: dict = security.JWTAUTH.data_decoder(encoded_data=staff_token.token)
     if not data.get("staff_id", None):
         raise error.BadDataError("Invalid token data")
     staff_obj = await staff_repo.get(data.get("staff_id", None))
-    if staff_obj and staff_obj.is_active:
+    if staff_obj and staff_obj.is_verified:
         raise error.BadDataError(
             detail="Account has been already verified",
         )
@@ -79,7 +79,7 @@ async def reset_password_link(
     staff_obj = await staff_repo.get_by_email(email=staff_data.email)
     if not staff_obj:
         raise error.NotFoundError("Staff not found")
-    await tasks.send_staff_password_reset_link.kicker().with_labels(delay=5).kiq(
+    await tasks.send_staff_password_reset_link.kicker().with_labels(delay=1).kiq(
         dict(
             email=staff_obj.email,
             id=str(staff_obj.id),
@@ -99,9 +99,20 @@ async def update_staff_password(
         staff_obj = await staff_repo.get(token_data.get("staff_id", None))
         if not staff_obj:
             raise error.NotFoundError("Staff not found")
+        if staff_obj.password_reset_token != staff_data.token:
+            raise error.BadDataError("Authentication failed")
         if staff_obj.check_password(staff_data.password.get_secret_value()):
             raise error.BadDataError("Try another password you have not used before")
         if await staff_repo.update_password(staff_obj, staff_data):
+            await tasks.send_verify_staff_password_reset.kicker().with_labels(
+                delay=3, priority=4
+            ).kiq(
+                dict(
+                    email=staff_obj.email,
+                    id=str(staff_obj.id),
+                    full_name=f"{staff_obj.firstname} {staff_obj.lastname}",
+                )
+            )
             return IResponseMessage(message="password was reset successfully")
     raise error.BadDataError("Invalid token was provided")
 
@@ -115,6 +126,13 @@ async def update_staff_password_tno_token(
     if staff_obj.check_password(staff_data.password.get_secret_value()):
         raise error.BadDataError("Try another password you have not used before")
     if await staff_repo.update_password(staff_obj, staff_data):
+        await tasks.send_verify_staff_password_reset.kicker().with_labels(delay=3, priority=4).kiq(
+            dict(
+                email=staff_obj.email,
+                id=str(staff_obj.id),
+                full_name=f"{staff_obj.firstname} {staff_obj.lastname}",
+            )
+        )
         return IResponseMessage(message="password was reset successfully")
     raise error.BadDataError("Invalid token was provided")
 
@@ -127,9 +145,22 @@ async def remove_staff_data(data_in: schema.IRemoveStaff) -> None:
     raise error.NotFoundError(f"Staff with staff_id {data_in.staff_id} does not exist")
 
 
-async def get_staff(staff_id: str, load_related: bool = False) -> t.List[model.Staff]:
-    Staffs = await staff_repo.get(staff_id, load_related=load_related)
-    return Staffs
+async def get_staff(
+    staff_id: str, load_related: bool = False
+) -> t.Union[schema.IStaffOutFull, schema.IStaffOut]:
+    if not staff_id:
+        raise error.NotFoundError(
+            "staff  with customer does not exist",
+        )
+    staffs = await staff_repo.get(staff_id, load_related=load_related)
+    if staffs:
+        try:
+            if not load_related:
+                return schema.IStaffOut.from_orm(staffs)
+            return schema.IStaffOutFull.from_orm(staffs)
+        except Exception:
+            raise error.ServerError("Error getting staff data")
+    raise error.NotFoundError("No staff with the provided credential")
 
 
 async def get_total_Staffs():
@@ -154,13 +185,11 @@ async def add_staff_permission(
     get_staff = await staff_repo.get(data_in.staff_id)
     if not get_staff:
         raise error.NotFoundError("Staff not found")
-    get_perms = await permission_repo.get_by_props(
-        prop_name="id", prop_values=data_in.permissions
-    )
+    get_perms = await permission_repo.get_by_props(prop_name="id", prop_values=data_in.permissions)
     if not get_perms:
         raise error.NotFoundError("permissions not found")
     update_Staff = await staff_repo.add_staff_permissions(
-        staff=get_staff,
+        staff_id=get_staff.id,
         permission_objs=get_perms,
     )
     if update_Staff:
@@ -179,13 +208,11 @@ async def get_staff_permissions(
 async def remove_staff_permissions(
     data_in: schema.IStaffRoleUpdate,
 ) -> IResponseMessage:
-    get_staff = await staff_repo.get(data_in.staff_id)
+    get_staff = await staff_repo.get(data_in.staff_id, expunge=False)
     if not get_staff:
         raise error.NotFoundError("Staff not found")
     check_perms = await permission_repo.get_by_ids(data_in.permissions)
     if not check_perms:
         raise error.NotFoundError(detail=" Permission not found")
-    await staff_repo.remove_staff_permission(
-        staff=get_staff, permission_objs=check_perms
-    )
+    await staff_repo.remove_staff_permission(staff_id=get_staff.id, permission_objs=check_perms)
     return IResponseMessage(message="Staff role was updated successfully")

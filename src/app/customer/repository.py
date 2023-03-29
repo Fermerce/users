@@ -19,25 +19,31 @@ class CustomerRepository(BaseRepository[model.Customer]):
         return await super().create(new_customer)
 
     async def update(
-        self, customer: model.Customer, obj: schema.ICustomerIn
+        self, customer: model.Customer, obj: t.Union[schema.ICustomerIn, dict]
     ) -> model.Customer:
-        check_customer: model.Customer = await super().get(customer.id)
-        if check_customer:
-            for k, v in obj.dict().items():
-                if hasattr(check_customer, k):
-                    setattr(check_customer, k, v)
-        if obj.password:
-            check_customer.hash_password()
-        self.db.add(check_customer)
+        if customer:
+            if isinstance(obj, schema.ICustomerIn):
+                for k, v in obj.dict().items():
+                    if hasattr(customer, k):
+                        setattr(customer, k, v)
+                if obj.password:
+                    customer.password = customer.generate_hash(obj.get("password"))
+            elif isinstance(obj, dict):
+                for k, v in obj.items():
+                    if hasattr(customer, k):
+                        setattr(customer, k, v)
+                if obj.get("password", None):
+                    customer.password = customer.generate_hash(obj.get("password"))
+        self.db.add(customer)
         await self.db.commit()
-        return check_customer
+        return customer
 
     async def add_customer_permission(
         self,
         customer_id: str,
         permission_objs: t.List[Permission],
     ) -> model.Customer:
-        customer = await super().get(customer_id, load_related=True)
+        customer = await super().get(customer_id, load_related=True, expunge=False)
         if customer is None:
             raise error.NotFoundError("customer not found")
         existed_perms = set()
@@ -50,9 +56,7 @@ class CustomerRepository(BaseRepository[model.Customer]):
             raise error.DuplicateError(
                 f"`{','.join(existed_perms)}`role/roles already exists for customer {customer.firstname} {customer.lastname}"
             )
-        self.db.expunge(customer)
-
-        customer.roles.extend(permission_objs)
+        customer.permissions.extend(permission_objs)
         self.db.add(customer)
         await self.db.commit()
         await self.db.refresh(customer)
@@ -63,7 +67,7 @@ class CustomerRepository(BaseRepository[model.Customer]):
         customer_id: str,
         permission_objs: t.List[Permission],
     ) -> model.Customer:
-        customer = await super().get(customer_id, load_related=True)
+        customer = await super().get(customer_id, load_related=True, expunge=False)
         if customer is None:
             raise error.NotFoundError("customer not found")
         if len(customer.permissions) == 0:
@@ -74,7 +78,7 @@ class CustomerRepository(BaseRepository[model.Customer]):
                     raise error.DuplicateError(
                         f"role `{permission.name }` not found for customer {customer.firstname} {customer.lastname}"
                     )
-            customer.roles.remove(per)
+            customer.permissions.remove(per)
         self.db.add(customer)
         await self.db.commit()
         await self.db.refresh(customer)
@@ -87,28 +91,25 @@ class CustomerRepository(BaseRepository[model.Customer]):
     async def update_password(
         self, customer: model.Customer, obj: schema.ICustomerResetPassword
     ) -> model.Customer:
-        customer.password = obj.password.get_secret_value()
-        customer.hash_password()
+        str_pass = obj.password.get_secret_value()
+        customer.password = customer.generate_hash(str_pass)
         self.db.add(customer)
         await self.db.commit()
         return customer
 
-    async def activate(
-        self, customer: model.Customer, mode: bool = True
-    ) -> model.Customer:
+    async def activate(self, customer: model.Customer, mode: bool = True) -> model.Customer:
         customer.is_active = mode
         customer.is_verified = mode
+        customer.is_suspended = mode
         self.db.add(customer)
         await self.db.commit()
         return customer
 
-    async def delete(
-        self, customer: model.Customer, permanent: bool = False
-    ) -> model.Customer:
+    async def delete(self, customer: model.Customer, permanent: bool = False) -> model.Customer:
         if permanent:
-            await super().delete(customer.id)
+            await super().delete(id=str(customer.id))
             return True
-        return await self.activate(customer)
+        return await self.activate(customer, mode=permanent)
 
 
 customer_repo = CustomerRepository()

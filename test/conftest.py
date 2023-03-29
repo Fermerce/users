@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from alembic.config import Config
 from alembic import command
 import main
-from src.lib.base import settings
-from db.config import engine
+from src._base import settings
+from src.lib.db.config import engine
 
 
 @pytest.fixture(autouse=True)

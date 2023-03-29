@@ -16,16 +16,17 @@ class JWTAUTH:
             else:
                 secret_key = secret_key
             payload = jwt.decode(
-                encoded_data,
-                secret_key,
-                [config.algorithm],
+                token=encoded_data,
+                key=secret_key,
+                algorithms=[config.algorithm],
             )
+
             if payload:
                 return payload
-            raise error.UnauthorizedError()
+            raise error.UnauthorizedError("Invalid token provided")
 
         except JWTError:
-            raise error.UnauthorizedError()
+            raise error.UnauthorizedError("Invalid token provided")
 
     @staticmethod
     def data_encoder(
@@ -39,9 +40,7 @@ class JWTAUTH:
             if duration:
                 to_encode.update({"exp": datetime.utcnow() + duration})
             else:
-                to_encode.update(
-                    {"exp": datetime.utcnow() + config.get_refresh_expires_time()}
-                )
+                to_encode.update({"exp": datetime.utcnow() + config.get_refresh_expires_time()})
             encoded_data = jwt.encode(
                 claims=to_encode,
                 key=secret_key if secret_key else config.refresh_secret_key,
@@ -60,16 +59,10 @@ class JWTAUTH:
         refresh_data = data.copy()
         if duration:
             access_data.update({"exp": datetime.utcnow() + duration})
-            refresh_data.update(
-                {"exp": datetime.utcnow() + config.get_refresh_expires_time()}
-            )
+            refresh_data.update({"exp": datetime.utcnow() + config.get_refresh_expires_time()})
         else:
-            access_data.update(
-                {"exp": datetime.utcnow() + config.get_access_expires_time()}
-            )
-            refresh_data.update(
-                {"exp": datetime.utcnow() + config.get_refresh_expires_time()}
-            )
+            access_data.update({"exp": datetime.utcnow() + config.get_access_expires_time()})
+            refresh_data.update({"exp": datetime.utcnow() + config.get_refresh_expires_time()})
         try:
             encode_jwt_refresh = jwt.encode(
                 claims=refresh_data,

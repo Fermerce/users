@@ -6,12 +6,20 @@ customer_permission_association_table = sa.Table(
     Base.metadata,
     sa.Column(
         "customer_id",
-        sa.ForeignKey("customer.id"),
+        sa.ForeignKey(
+            "customer.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
         primary_key=True,
     ),
     sa.Column(
         "permission_id",
-        sa.ForeignKey("permission.id"),
+        sa.ForeignKey(
+            "permission.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
         primary_key=True,
     ),
 )

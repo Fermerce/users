@@ -17,13 +17,20 @@ class StaffRepository(BaseRepository[model.Staff]):
         new_staff = dict(**obj.dict(exclude={"password"}), password=new_password)
         return await super().create(new_staff)
 
-    async def update(self, staff: model.Staff, obj: schema.IStaffIn) -> model.Staff:
+    async def update(self, staff: model.Staff, obj: t.Union[schema.IStaffIn, dict]) -> model.Staff:
         if staff:
-            for k, v in obj.dict().items():
-                if hasattr(staff, k):
-                    setattr(staff, k, v)
-        if obj.password:
-            staff.hash_password()
+            if isinstance(obj, schema.IStaffIn):
+                for k, v in obj.dict().items():
+                    if hasattr(staff, k):
+                        setattr(staff, k, v)
+                if obj.password:
+                    staff.password = staff.generate_hash(obj.password)
+            elif isinstance(obj, dict):
+                for k, v in obj.items():
+                    if hasattr(staff, k):
+                        setattr(staff, k, v)
+                if obj.get("passwords", None):
+                    staff.password = staff.generate_hash(obj.get("passwords"))
         self.db.add(staff)
         await self.db.commit()
         return staff
@@ -33,21 +40,20 @@ class StaffRepository(BaseRepository[model.Staff]):
         staff_id: str,
         permission_objs: t.List[Permission],
     ) -> model.Staff:
-        staff = await super().get(staff_id, load_related=True)
+        staff = await super().get(staff_id, load_related=True, expunge=False)
         if staff is None:
             raise error.NotFoundError("staff not found")
-        existed_roles = set()
+        existed_permissions = set()
         for permission in permission_objs:
             for perm in staff.permissions:
                 if perm.name == permission.name:
-                    existed_roles.add(permission.name)
-        if len(existed_roles) > 0:
+                    existed_permissions.add(permission.name)
+        if len(existed_permissions) > 0:
             raise error.DuplicateError(
-                f"`{','.join(existed_roles)}`roles already exists for staff {staff.firstname} {staff.lastname}"
+                f"`{','.join(existed_permissions)}`roles already exists for staff {staff.firstname} {staff.lastname}"
             )
-        self.db.expunge(staff)
 
-        staff.roles.extend(permission_objs)
+        staff.permissions.extend(permission_objs)
         self.db.add(staff)
         await self.db.commit()
         await self.db.refresh(staff)
@@ -55,18 +61,22 @@ class StaffRepository(BaseRepository[model.Staff]):
 
     async def remove_staff_permission(
         self,
-        staff: model.Staff,
+        staff_id: str,
         permission_objs: t.List[Permission],
     ) -> model.Staff:
-        if len(staff.roles) == 0:
-            raise error.NotFoundError("staff has no roles")
+        staff = await super().get(staff_id, load_related=True, expunge=False)
+        if staff is None:
+            raise error.NotFoundError("staff not found")
+        if len(staff.permissions) == 0:
+            raise error.NotFoundError("staff has no permissions")
         for permission in permission_objs:
-            for perm in staff.roles:
+            for perm in staff.permissions:
                 if not perm.name == permission.name:
                     raise error.DuplicateError(
                         f"Permission `{permission.name }` not found for staff {staff.firstname} {staff.lastname}"
                     )
-                staff.roles.remove(permission)
+
+                staff.permissions.remove(perm)
         self.db.add(staff)
         await self.db.commit()
         await self.db.refresh(staff)
@@ -79,14 +89,16 @@ class StaffRepository(BaseRepository[model.Staff]):
     async def update_password(
         self, staff: model.Staff, obj: schema.IStaffResetPassword
     ) -> model.Staff:
-        staff.password = obj.password.get_secret_value()
-        staff.hash_password()
+        str_pass = obj.password.get_secret_value()
+        staff.password = staff.generate_hash(str_pass)
         self.db.add(staff)
         await self.db.commit()
         return staff
 
     async def activate(self, staff: model.Staff, mode: bool = True) -> model.Staff:
         staff.is_active = mode
+        staff.is_verified = mode
+        staff.is_suspended = mode
         self.db.add(staff)
         await self.db.commit()
         return staff
@@ -95,7 +107,7 @@ class StaffRepository(BaseRepository[model.Staff]):
         if permanent:
             await super().delete(staff.id)
             return True
-        return await self.activate(staff)
+        return await self.activate(staff, mode=permanent)
 
 
 staff_repo = StaffRepository()

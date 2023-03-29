@@ -1,5 +1,4 @@
-from src.lib.db.primary_key import GUID, Base, sa
-from sqlalchemy.orm import relationship
+from src.lib.db.primary_key import Base, sa
 
 
 class AuthToken(Base):

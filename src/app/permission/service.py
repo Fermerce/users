@@ -12,9 +12,7 @@ from src.app.permission.repository import permission_repo
 async def create(
     data_in: schema.IPermissionIn,
 ) -> model.Permission:
-    check_perm = await permission_repo.get_by_attr(
-        attr={"name": data_in.name}, first=True
-    )
+    check_perm = await permission_repo.get_by_attr(attr={"name": data_in.name}, first=True)
     if check_perm:
         raise error.DuplicateError("Permission already exists")
     new_perm = await permission_repo.create(obj=data_in)
@@ -66,15 +64,11 @@ async def update(
     check_per = await permission_repo.get(id=permission_id)
     if not check_per:
         raise error.NotFoundError("Permission does not exist")
-    check_per = await permission_repo.get_by_attr(
-        attr=dict(name=data_in.name), first=True
-    )
+    check_per = await permission_repo.get_by_attr(attr=dict(name=data_in.name), first=True)
     if check_per and check_per.id != permission_id:
         raise error.DuplicateError("Permission already exists")
     if await permission_repo.get_by_attr(attr={"name": data_in.name}):
-        raise error.DuplicateError(
-            f"Permission with name `{data_in.name}` already exists"
-        )
+        raise error.DuplicateError(f"Permission with name `{data_in.name}` already exists")
     return await permission_repo.update(str(permission_id), data_in.dict())
 
 

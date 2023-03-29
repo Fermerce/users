@@ -1,9 +1,9 @@
 import typing as t
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, Depends, status
 from src.app.customer import schema, service, dependency
 from src._base.schema.response import IResponseMessage
 from src.app.customer.model import Customer
-
+from src.lib.errors import error
 
 router = APIRouter(prefix="/customers", tags=["Customers"])
 
@@ -13,11 +13,18 @@ async def create_customer(data_in: schema.ICustomerIn):
     return await service.create(data_in=data_in)
 
 
-@router.get("/me", response_model=schema.ICustomerOut, status_code=status.HTTP_200_OK)
+@router.get(
+    "/me",
+    response_model=t.Union[schema.ICustomerOutFull, schema.ICustomerOut],
+    status_code=status.HTTP_200_OK,
+)
 async def get_customer_current_data(
-    customer: Customer = Depends(dependency.require_customer),
-) -> schema.ICustomerOut:
-    return customer
+    customer: dict = Depends(dependency.AppAuth.authenticate),
+    load_related: bool = False,
+) -> t.Union[schema.ICustomerOutFull, schema.ICustomerOut]:
+    if not customer.get("user_id", None):
+        raise error.UnauthorizedError()
+    return await service.get_customer(customer.get("user_id", None), load_related=load_related)
 
 
 @router.post("/password/reset-link", status_code=status.HTTP_200_OK)

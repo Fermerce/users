@@ -17,7 +17,7 @@ async def auth_login(
     data_in: OAuth2PasswordRequestForm = Depends(),
 ) -> t.Union[schema.IToken, IResponseMessage]:
     result = await service.auth_login(data_in=data_in, request=request)
-    print(result)
+
     return result
 
 
@@ -30,8 +30,6 @@ async def auth_login_token_refresh(data_in: schema.IRefreshToken, request: Reque
     return await service.auth_login_token_refresh(data_in=data_in, request=request)
 
 
-@router.post(
-    "/check/dev", status_code=status.HTTP_200_OK, response_model=IResponseMessage
-)
+@router.post("/check/dev", status_code=status.HTTP_200_OK, response_model=IResponseMessage)
 async def check_user_email(data_in: schema.ICheckUserEmail) -> IResponseMessage:
     return await service.check_user_email(data_in)
