@@ -60,6 +60,9 @@ async def verify_customer_email(
     if not data.get("user_id", None):
         raise error.BadDataError("Invalid token data")
     customer_obj = await customer_repo.get(data.get("user_id", None))
+    if not customer_obj:
+        raise error.BadDataError("Invalid token")
+
     if customer_obj and customer_obj.is_verified:
         raise error.BadDataError(
             detail="Account has been already verified",
