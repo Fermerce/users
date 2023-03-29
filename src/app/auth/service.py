@@ -4,8 +4,8 @@ from fastapi.security.oauth2 import (
     OAuth2PasswordRequestForm,
 )
 from src.app.customer.repository import customer_repo
-from src.taskiq.auth.tasks import create_token
-from src.taskiq.user.tasks import send_customer_activation_email
+from src._taskiq.auth.tasks import create_token
+from src._taskiq.user.tasks import send_customer_activation_email
 from src._base.schema.response import IResponseMessage
 from src.lib.errors import error
 from src.app.auth import schema

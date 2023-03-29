@@ -1,4 +1,4 @@
-from src.taskiq.utils import message_ack
+from src._taskiq.utils import message_ack
 
 
 @message_ack

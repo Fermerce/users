@@ -1,20 +1,22 @@
 from datetime import timedelta
-from src.app.staff.repository import staff_repo
-from src.taskiq.broker import broker
+from src.app.customer.repository import customer_repo
+from src._taskiq.broker import broker
 from src.lib.shared.mail.mailer import Mailer
 from src.lib.utils import security
 from src._base.settings import config
 
 
 @broker.task
-def send_staff_activation_email(staff: dict):
-    token: str = security.JWTAUTH.data_encoder(data={"staff_id": str(staff.get("id"))})
-    url = f"{config.project_url}/auth/activateAccount?activate_token={token}&auth_type=staff"
+def send_customer_activation_email(customer: dict):
+    token: str = security.JWTAUTH.data_encoder(
+        data={"user_id": str(customer.get("id"))}
+    )
+    url = f"{config.project_url}/auth/activateAccount?activate_token={token}&auth_type=customer"
     mail_template_context = {
         "url": url,
         "button_label": "confirm",
         "title": "Email confirmation link",
-        "description": f"""Hello {staff.get('full_name')}, 
+        "description": f"""Hello {customer.get('full_name')}, 
         Welcome to <b>{config.project_name}</b>,
             kindly click on the link below to activate your account 
             <b> <a href='{url}'>{url}</a>""",
@@ -27,26 +29,25 @@ def send_staff_activation_email(staff: dict):
         context=mail_template_context,
     )
 
-    new_mail.send_mail(email=[staff.get("email")])
+    new_mail.send_mail(email=[customer.get("email")])
 
 
 @broker.task
-async def send_staff_password_reset_link(staff: dict):
-    staff_id = staff.get("id")
-    get_staff = await staff_repo.get(id=staff_id)
-    if get_staff:
+async def send_customer_password_reset_link(customer: dict):
+    user_id = customer.get("id")
+    get_user = await customer_repo.get(id=user_id)
+    if get_user:
         token = security.JWTAUTH.data_encoder(
-            data={"staff_id": staff_id}, duration=timedelta(days=1)
+            data={"user_id": user_id}, duration=timedelta(days=1)
         )
-        result = await staff_repo.update(staff=get_staff, obj=dict(password_reset_token=token))
-        print(result.password_reset_token)
-        url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=staff"
+        customer_repo.update(customer=get_user, obj={"password_reset_token": token})
+        url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=customer"
 
         mail_template_context = {
             "url": url,
             "button_label": "reset password",
             "title": "password reset link",
-            "description": f"""{staff.get('full_name')} you request for password reset link,
+            "description": f"""{customer.get('full_name')} you request for password reset link,
             if not you please contact admin, <br><a href='{url}'>{url}</a>""",
         }
         new_mail = Mailer(
@@ -55,25 +56,27 @@ async def send_staff_password_reset_link(staff: dict):
             context=mail_template_context,
             subject="Password reset link",
         )
-        new_mail.send_mail(email=staff.get("email"))
+        new_mail.send_mail(email=customer.get("email"))
 
 
 @broker.task
-async def send_verify_staff_password_reset(staff: dict):
-    staff_id = staff.get("id")
-    get_staff = await staff_repo.get(id=staff_id)
-    if get_staff:
+async def send_verify_customer_password_reset(customer: dict):
+    user_id = customer.get("id")
+    get_user = await customer_repo.get(id=user_id)
+    if get_user:
         token = security.JWTAUTH.data_encoder(
-            data={"staff_id": staff_id}, duration=timedelta(days=1)
+            data={"user_id": user_id}, duration=timedelta(days=1)
         )
-        await staff_repo.update(staff=get_staff, obj=dict(password_reset_token=token))
-        url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=staff"
+        await customer_repo.update(
+            customer=get_user, obj=dict(password_reset_token=token)
+        )
+        url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=customer"
 
         mail_template_context = {
             "url": url,
             "button_label": "reset password",
             "title": "password reset link",
-            "description": f"""{staff.get('full_name')} your password was reset successfully, 
+            "description": f"""{customer.get('full_name')} your password was reset successfully, 
              if not you please contact admin, <br><a href='{url}'>{url}</a>""",
         }
         new_mail = Mailer(
@@ -82,4 +85,4 @@ async def send_verify_staff_password_reset(staff: dict):
             context=mail_template_context,
             subject="Password reset link",
         )
-        new_mail.send_mail(email=staff.get("email"))
+        new_mail.send_mail(email=customer.get("email"))

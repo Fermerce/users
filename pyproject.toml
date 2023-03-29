@@ -33,10 +33,6 @@ kombu = "^5.2.4"
 [tool.poetry.scripts]
 server = 'bootstrap:run_server'
 
-
-
-
-
 [tool.poetry.group.test.dependencies]
 pytest-asyncio = "^0.20.3"
 pytest = "^7.2.2"

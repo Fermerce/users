@@ -1,4 +1,4 @@
-from src.taskiq.broker import broker
+from src._taskiq.broker import broker
 from src.app.auth.repository import auth_token_repo
 
 

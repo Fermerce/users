@@ -9,7 +9,7 @@ from src.lib.errors import error
 from src.app.customer import schema, model
 from src.app.customer.repository import customer_repo
 from src.app.permission.repository import permission_repo
-from src.taskiq.user import tasks
+from src._taskiq.user import tasks
 from src.lib.utils import security
 
 

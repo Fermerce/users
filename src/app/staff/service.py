@@ -8,7 +8,7 @@ from src.app.permission.model import Permission
 from src.lib.errors import error
 from src.app.staff import schema, model
 from src.app.staff.repository import staff_repo
-from src.taskiq.staff import tasks
+from src._taskiq.staff import tasks
 from src.app.permission.repository import permission_repo
 from src.lib.utils import security
 

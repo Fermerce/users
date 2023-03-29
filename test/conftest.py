@@ -9,6 +9,7 @@ from alembic import command
 import main
 from src._base import settings
 from src.lib.db.config import engine
+from alembic import op
 
 
 @pytest.fixture(autouse=True)
@@ -18,7 +19,7 @@ def db_engine():
     alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
     try:
         command.downgrade(alembic_cfg, "head")
-    except Exception:
+    except NotImplementedError:
         pass
     command.upgrade(alembic_cfg, "head")
     yield
