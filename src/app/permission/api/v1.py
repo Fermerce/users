@@ -28,7 +28,9 @@ async def create_permission(
 # response_model=list[schema.IPermissionOut]
 async def get_permission_list(
     # _: Customer = Depends(CustomerWrite.current_Customer_with_data),
-    filter: t.Optional[str] = Query(default="", alias="filter", description="filter all address"),
+    filter: t.Optional[str] = Query(
+        default="", alias="filter", description="filter all address"
+    ),
     select: t.Optional[str] = Query(
         default="",
         alias="select",
@@ -39,7 +41,9 @@ async def get_permission_list(
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
     ),
-    order_by: t.Optional[str] = Query(default="id", description="order by attribute, e.g. id"),
+    order_by: t.Optional[str] = Query(
+        default="id", description="order by attribute, e.g. id"
+    ),
 ):
     return await service.filter(
         filter=filter,

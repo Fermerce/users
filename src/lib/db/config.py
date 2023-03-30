@@ -22,4 +22,6 @@ if str(config.get_database_url()).startswith("sqlite+aiosqlite"):
 else:
     engine = create_async_engine(config.get_database_url(), echo=False, future=True)
 
-async_session: AsyncSession = sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
+async_session: AsyncSession = sessionmaker(
+    bind=engine, expire_on_commit=False, class_=AsyncSession
+)

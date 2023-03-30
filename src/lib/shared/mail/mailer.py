@@ -81,7 +81,9 @@ class Mailer(template_finder.MailTemplate):
             for attachment in self.attachments:
                 message.attach(attachment)
         try:
-            with smtplib.SMTP_SSL(host=self.email_host, port=self.email_server_port) as smtp:
+            with smtplib.SMTP_SSL(
+                host=self.email_host, port=self.email_server_port
+            ) as smtp:
                 smtp.login(
                     user=self.admin_email,
                     password=self.admin_password,

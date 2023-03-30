@@ -2,7 +2,7 @@ from src._taskiq.broker import broker
 from src.app.auth.repository import auth_token_repo
 
 
-@broker.task
+@broker.task(delay=1, priority=4)
 async def create_token(
     user_ip: str,
     refresh_token: str,

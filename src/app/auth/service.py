@@ -19,43 +19,50 @@ async def auth_login(
     data_in: OAuth2PasswordRequestForm,
     user_repo: BaseRepository = customer_repo,
 ) -> t.Union[schema.IToken, IResponseMessage]:
-    check_user = await user_repo.get_by_email(email=data_in.username)
+    check_user = await user_repo.get_by_attr(
+        attr=dict(email=data_in.username), first=True
+    )
+    if not check_user:
+        check_user = await user_repo.get_by_attr(
+            attr=dict(username=data_in.username), first=True
+        )
     if not check_user:
         raise error.UnauthorizedError(detail="incorrect email or password")
     if not check_user.check_password(data_in.password):
         raise error.UnauthorizedError(detail="incorrect email or password")
     if not check_user.is_verified:
-        await send_customer_activation_email.kicker().kiq(
-            dict(email=data_in.email, id=str(check_user.id))
+        await send_customer_activation_email.kiq(
+            dict(email=data_in.username, id=str(check_user.id))
         )
         return IResponseMessage(
-            message="Account is not verified, please check your email for verification link"
+            message="Your is not verified, Please check your for verification link before continuing"
         )
-    else:
-        get_jwt_data_for_encode = schema.IToEncode(user_id=str(check_user.id))
-        access_token, refresh_token = JWTAUTH.jwt_encoder(data=get_jwt_data_for_encode.dict())
-        if access_token and refresh_token:
-            user_ip = auth_token_repo.get_user_ip(request)
-            check_token = await auth_token_repo.get_by_attr(
-                attr=dict(user_id=str(check_user.id), user_ip=user_ip), first=True
-            )
-            if check_token:
-                await create_token.kicker().with_labels(delay=5).kiq(
-                    user_id=str(check_user.id),
-                    access_token=access_token,
-                    refresh_token=refresh_token,
-                    user_ip=user_ip,
-                    token_id=check_token.id,
-                )
-                return schema.IToken(refresh_token=refresh_token, access_token=access_token)
-            await create_token.kicker().with_labels(delay=5).kiq(
+    get_jwt_data_for_encode = schema.IToEncode(user_id=str(check_user.id))
+    access_token, refresh_token = JWTAUTH.jwt_encoder(
+        data=get_jwt_data_for_encode.dict()
+    )
+    if access_token and refresh_token:
+        user_ip = auth_token_repo.get_user_ip(request)
+        check_token = await auth_token_repo.get_by_attr(
+            attr=dict(user_id=str(check_user.id), user_ip=user_ip), first=True
+        )
+        if check_token:
+            await create_token.kiq(
                 user_id=str(check_user.id),
                 access_token=access_token,
                 refresh_token=refresh_token,
                 user_ip=user_ip,
+                token_id=check_token.id,
             )
             return schema.IToken(refresh_token=refresh_token, access_token=access_token)
-        raise error.ServerError("Count not authenticate user")
+        await create_token.kiq(
+            user_id=str(check_user.id),
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user_ip=user_ip,
+        )
+        return schema.IToken(refresh_token=refresh_token, access_token=access_token)
+    raise error.ServerError("Count not authenticate user")
 
 
 async def auth_login_token_refresh(
@@ -66,6 +73,7 @@ async def auth_login_token_refresh(
     check_auth_token = await auth_token_repo.get_by_attr(
         attr=dict(refresh_token=data_in.refresh_token), first=True
     )
+
     if not check_auth_token:
         raise error.UnauthorizedError()
     token_data = JWTAUTH.data_decoder(encoded_data=data_in.refresh_token)
@@ -73,20 +81,23 @@ async def auth_login_token_refresh(
     user_ip = auth_token_repo.get_user_ip(request)
     if check_auth_token.ip_address != user_ip:
         raise error.UnauthorizedError()
-
-    new_token = await auth_token_repo.create(
-        user_id=check_user.id,
-        user_ip=user_ip,
-        access_token=new_token.access_token,
-        refresh_token=new_token.refresh_token,
-        return_token=True,
-        token_id=check_auth_token.id,
+    get_jwt_data_for_encode = schema.IToEncode(user_id=str(check_user.id))
+    access_token, refresh_token = JWTAUTH.jwt_encoder(
+        data=get_jwt_data_for_encode.dict()
     )
-    if new_token:
-        return schema.IToken(
-            access_token=new_token.access_token,
-            refresh_token=new_token.refresh_token,
+    if access_token and refresh_token:
+        await create_token.kiq(
+            user_id=str(check_user.id),
+            user_ip=user_ip,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_id=str(check_auth_token.id),
         )
+        return schema.IToken(
+            access_token=access_token,
+            refresh_token=refresh_token,
+        )
+
     raise error.ServerError("could not create token, please try again")
 
 
@@ -94,7 +105,14 @@ async def check_user_email(
     data_in: schema.ICheckUserEmail,
     user_repo: BaseRepository = customer_repo,
 ) -> IResponseMessage:
-    check_user = await user_repo.get_by_email(email=data_in.email)
+    check_user = await user_repo.get_by_attr(
+        attr=dict(email=data_in.username), first=True
+    )
+
+    if not check_user:
+        check_user = await user_repo.get_by_attr(
+            attr=dict(email=data_in.username), first=True
+        )
     if not check_user:
         raise error.NotFoundError()
     return IResponseMessage(message="Account exists")

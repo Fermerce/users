@@ -18,7 +18,7 @@ class AuthTokeRepository(BaseRepository[model.AuthToken]):
     ) -> model.AuthToken:
         if token_id:
             result = await super().update(
-                token_id.id,
+                token_id,
                 dict(
                     access_token=access_token,
                     refresh_token=refresh_token,

@@ -24,7 +24,9 @@ async def get_customer_current_data(
 ) -> t.Union[schema.ICustomerOutFull, schema.ICustomerOut]:
     if not customer.get("user_id", None):
         raise error.UnauthorizedError()
-    return await service.get_customer(customer.get("user_id", None), load_related=load_related)
+    return await service.get_customer(
+        customer.get("user_id", None), load_related=load_related
+    )
 
 
 @router.post("/password/reset-link", status_code=status.HTTP_200_OK)

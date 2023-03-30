@@ -47,10 +47,14 @@ def upgrade() -> None:
         ondelete="CASCADE",
     )
     op.drop_constraint(
-        "staff_role_association_permission_id_fkey", "staff_role_association", type_="foreignkey"
+        "staff_role_association_permission_id_fkey",
+        "staff_role_association",
+        type_="foreignkey",
     )
     op.drop_constraint(
-        "staff_role_association_staff_id_fkey", "staff_role_association", type_="foreignkey"
+        "staff_role_association_staff_id_fkey",
+        "staff_role_association",
+        type_="foreignkey",
     )
     op.create_foreign_key(
         None,

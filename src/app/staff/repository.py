@@ -17,7 +17,9 @@ class StaffRepository(BaseRepository[model.Staff]):
         new_staff = dict(**obj.dict(exclude={"password"}), password=new_password)
         return await super().create(new_staff)
 
-    async def update(self, staff: model.Staff, obj: t.Union[schema.IStaffIn, dict]) -> model.Staff:
+    async def update(
+        self, staff: model.Staff, obj: t.Union[schema.IStaffIn, dict]
+    ) -> model.Staff:
         if staff:
             if isinstance(obj, schema.IStaffIn):
                 for k, v in obj.dict().items():
