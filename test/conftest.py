@@ -16,10 +16,6 @@ def db_engine():
     settings.config.environment = "testing"
     alembic_cfg = Config("alembic.ini")
     alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
-    try:
-        command.downgrade(alembic_cfg, "head")
-    except NotImplementedError:
-        pass
     command.upgrade(alembic_cfg, "head")
     yield
     command.downgrade(alembic_cfg, "head")

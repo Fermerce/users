@@ -74,7 +74,7 @@ class Settings(pyd.BaseSettings):
             "dev",
         ]:
             return f"{self.db_type}://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
-        return "sqlite+aiosqlite:///./testing.sqlite"
+        return f"{self.db_type}://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}_test"
 
     def get_broker_url(self, include_virtue: bool = True) -> str:
         url = f"{self.broker_type}://{self.broker_user}:{self.broker_password}@{self.broker_host}:{self.broker_port}"
