@@ -1,19 +1,26 @@
+import os
 import sys
 import time
+
+from taskiq import InMemoryBroker, AsyncBroker
 from src._taskiq._repository import consumer_list
 from src._taskiq.config import connection
 from src._base.settings import config
 from taskiq_aio_pika import AioPikaBroker
+import taskiq_fastapi
 
+env = os.environ.get("ENVIRONMENT")
 
 # Set up the broker
-broker = AioPikaBroker(
+broker: AsyncBroker = AioPikaBroker(
     url=config.get_broker_url(),
     exchange_name=config.project_name.lower() if config.project_name else "taskiq",
 )
 
+if env and env == "testing":
+    broker = InMemoryBroker()
 
-# from src.dramatiq_tasks.utils import discover
+taskiq_fastapi.init(broker, "main:app")
 
 
 def run():

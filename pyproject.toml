@@ -28,6 +28,8 @@ taskiq-aio-pika = "^0.1.1"
 taskiq = "^0.3.3"
 aiosqlite = "^0.18.0"
 kombu = "^5.2.4"
+pytest-env = "^0.8.1"
+taskiq-fastapi = "^0.1.1"
 
 
 [tool.poetry.scripts]
@@ -36,6 +38,9 @@ server = 'bootstrap:run_server'
 [tool.poetry.group.test.dependencies]
 pytest-asyncio = "^0.20.3"
 pytest = "^7.2.2"
+install = "^1.3.5"
+faker = "^18.3.1"
+pytest-watch = "^4.2.0"
 
 
 [tool.poetry.group.lint.dependencies]

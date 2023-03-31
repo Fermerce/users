@@ -42,7 +42,16 @@ app = get_application()
 
 @app.on_event("startup")
 async def start_broker():
-    await broker.startup()
+    if not broker.is_worker_process:
+        print("Starting broker")
+        await broker.startup()
+
+
+@app.on_event("shutdown")
+async def app_shutdown():
+    if not broker.is_worker_process:
+        print("Shutting down broker")
+        await broker.shutdown()
 
 
 @app.get("/", response_model=IHealthCheck, tags=["Health status"])

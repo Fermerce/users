@@ -7,18 +7,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from alembic.config import Config
 from alembic import command
 import main
-from src._base import settings
 from src.lib.db.config import engine
+import os
+from faker import Faker
+
+env = os.getenv("ENVIRONMENT")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="session")
+def get_faker():
+    faker = Faker()
+    return faker
+
+
+@pytest.fixture(scope="module")
 def db_engine():
-    settings.config.environment = "testing"
-    alembic_cfg = Config("alembic.ini")
-    alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
-    command.upgrade(alembic_cfg, "head")
-    yield
-    command.downgrade(alembic_cfg, "head")
+    if env and env == "testing":
+        alembic_cfg = Config("alembic.ini")
+        alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
+        command.upgrade(alembic_cfg, "head")
+        yield
+        command.downgrade(alembic_cfg, "head")
 
 
 @pytest_asyncio.fixture
