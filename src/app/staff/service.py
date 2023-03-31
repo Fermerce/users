@@ -187,9 +187,7 @@ async def add_staff_permission(
     get_staff = await staff_repo.get(data_in.staff_id)
     if not get_staff:
         raise error.NotFoundError("Staff not found")
-    get_perms = await permission_repo.get_by_props(
-        prop_name="id", prop_values=data_in.permissions
-    )
+    get_perms = await permission_repo.get_by_props(prop_name="id", prop_values=data_in.permissions)
     if not get_perms:
         raise error.NotFoundError("permissions not found")
     update_Staff = await staff_repo.add_staff_permissions(
@@ -218,18 +216,14 @@ async def remove_staff_permissions(
     check_perms = await permission_repo.get_by_ids(data_in.permissions)
     if not check_perms:
         raise error.NotFoundError(detail=" Permission not found")
-    await staff_repo.remove_staff_permission(
-        staff_id=get_staff.id, permission_objs=check_perms
-    )
+    await staff_repo.remove_staff_permission(staff_id=get_staff.id, permission_objs=check_perms)
     return IResponseMessage(message="Staff role was updated successfully")
 
 
 async def login(
     request: Request, data_in: OAuth2PasswordRequestForm
 ) -> t.Union[IToken, IResponseMessage]:
-    check_staff = await staff_repo.get_by_attr(
-        attr=dict(email=data_in.username), first=True
-    )
+    check_staff = await staff_repo.get_by_attr(attr=dict(email=data_in.username), first=True)
     if not check_staff:
         raise error.UnauthorizedError(detail="incorrect email or password")
     if not check_staff.check_password(data_in.password):
@@ -249,9 +243,7 @@ async def login_token_refresh(data_in: IRefreshToken, request: Request) -> IToke
 
 
 async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:
-    check_staff = await staff_repo.get_by_attr(
-        attr=dict(email=data_in.username), first=True
-    )
+    check_staff = await staff_repo.get_by_attr(attr=dict(email=data_in.username), first=True)
     if not check_staff:
         raise error.NotFoundError()
     return IResponseMessage(message="Account exists")

@@ -18,10 +18,10 @@ async def get_staff_current_data(
     staff_data: dict = Depends(dependency.AppAuth.authenticate),
     load_related: bool = False,
 ) -> t.Union[schema.IStaffOutFull, schema.IStaffOut]:
-    if not staff_data.get("staff_id", None):
+    if not staff_data.get("user_id", None):
         raise error.UnauthorizedError()
     return await service.get_staff(
-        staff_id=staff_data.get("staff_id", None), load_related=load_related
+        staff_id=staff_data.get("user_id", None), load_related=load_related
     )
 
 

@@ -9,7 +9,6 @@ from alembic import command
 import main
 from src._base import settings
 from src.lib.db.config import engine
-from alembic import op
 
 
 @pytest.fixture(autouse=True)

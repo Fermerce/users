@@ -1,11 +1,12 @@
 import typing as t
 import uuid
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from src.app.permission import schema, service
 
 from src._base.enum.sort_type import SortOrder
 from src._base.schema.response import IBaseResponse
+from src.app.staff.dependency import require_super_admin_or_admin
 
 
 router = APIRouter(prefix="/permissions", tags=["Permissions"])
@@ -13,8 +14,9 @@ router = APIRouter(prefix="/permissions", tags=["Permissions"])
 
 @router.post(
     "/",
-    # response_model=IBaseResponse,
+    response_model=IBaseResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def create_permission(
     data_in: schema.IPermissionIn,
@@ -24,11 +26,13 @@ async def create_permission(
 
 @router.get(
     "/",
+    response_model=list[schema.IPermissionOut],
+    dependencies=[Depends(require_super_admin_or_admin)],
 )
-# response_model=list[schema.IPermissionOut]
 async def get_permission_list(
-    # _: Customer = Depends(CustomerWrite.current_Customer_with_data),
-    filter: t.Optional[str] = Query(default="", alias="filter", description="filter all address"),
+    filter: t.Optional[str] = Query(
+        default="", alias="filter", description="filter all address"
+    ),
     select: t.Optional[str] = Query(
         default="",
         alias="select",
@@ -39,7 +43,9 @@ async def get_permission_list(
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
     ),
-    order_by: t.Optional[str] = Query(default="id", description="order by attribute, e.g. id"),
+    order_by: t.Optional[str] = Query(
+        default="id", description="order by attribute, e.g. id"
+    ),
 ):
     return await service.filter(
         filter=filter,
@@ -51,23 +57,39 @@ async def get_permission_list(
     )
 
 
-@router.get("/{permission_id}", response_model=schema.IPermissionOut)
+@router.get(
+    "/{permission_id}",
+    response_model=schema.IPermissionOut,
+    dependencies=[Depends(require_super_admin_or_admin)],
+)
 async def get_permission(permission_id: uuid.UUID) -> schema.IPermissionOut:
     return await service.get(permission_id=permission_id)
 
 
-@router.put("/{permission_id}", response_model=schema.IPermissionOut)
+@router.put(
+    "/{permission_id}",
+    response_model=schema.IPermissionOut,
+    dependencies=[Depends(require_super_admin_or_admin)],
+)
 async def update_permission(
     permission_id: uuid.UUID, permission: schema.IPermissionIn
 ) -> schema.IPermissionOut:
     return await service.update(permission_id=permission_id, data_in=permission)
 
 
-@router.get("/total/count", response_model=int)
+@router.get(
+    "/total/count",
+    response_model=int,
+    dependencies=[Depends(require_super_admin_or_admin)],
+)
 async def get_total_permission() -> t.Optional[int]:
     return await service.get_total_count()
 
 
-@router.delete("/{permission_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{permission_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_super_admin_or_admin)],
+)
 async def delete_permission(permission_id: uuid.UUID) -> None:
     return await service.delete(permission_id=permission_id)

@@ -27,9 +27,7 @@ async def get_customer_current_data(
 ) -> t.Union[schema.ICustomerOutFull, schema.ICustomerOut]:
     if not customer.get("user_id", None):
         raise error.UnauthorizedError()
-    return await service.get_customer(
-        customer.get("user_id", None), load_related=load_related
-    )
+    return await service.get_customer(customer.get("user_id", None), load_related=load_related)
 
 
 @router.post("/password/reset-link", status_code=status.HTTP_200_OK)
@@ -84,8 +82,6 @@ async def login_token_refresh(data_in: IRefreshToken, request: Request):
     return await service.login_token_refresh(data_in=data_in, request=request)
 
 
-@router.post(
-    "/check/dev", status_code=status.HTTP_200_OK, response_model=IResponseMessage
-)
+@router.post("/check/dev", status_code=status.HTTP_200_OK, response_model=IResponseMessage)
 async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:
     return await service.check_user_email(data_in)

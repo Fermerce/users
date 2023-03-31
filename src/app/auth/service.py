@@ -15,9 +15,7 @@ async def auth_login(
     if not user_id:
         raise ValueError("Invalid data for login request")
     get_jwt_data_for_encode = schema.IToEncode(user_id=str(user_id))
-    access_token, refresh_token = JWTAUTH.jwt_encoder(
-        data=get_jwt_data_for_encode.dict()
-    )
+    access_token, refresh_token = JWTAUTH.jwt_encoder(data=get_jwt_data_for_encode.dict())
     if access_token and refresh_token:
         user_ip = auth_token_repo.get_user_ip(request)
         check_token = await auth_token_repo.get_by_attr(
@@ -51,14 +49,12 @@ async def auth_login_token_refresh(
 
     if not check_auth_token:
         raise error.UnauthorizedError()
-    token_data = JWTAUTH.data_decoder(encoded_data=data_in.refresh_token)
+    JWTAUTH.data_decoder(encoded_data=data_in.refresh_token)
     user_ip = auth_token_repo.get_user_ip(request)
     if check_auth_token.ip_address != user_ip:
         raise error.UnauthorizedError()
     get_jwt_data_for_encode = schema.IToEncode(user_id=str(check_auth_token.user_id))
-    access_token, refresh_token = JWTAUTH.jwt_encoder(
-        data=get_jwt_data_for_encode.dict()
-    )
+    access_token, refresh_token = JWTAUTH.jwt_encoder(data=get_jwt_data_for_encode.dict())
     if access_token and refresh_token:
         await create_token.kiq(
             user_id=str(check_auth_token.user_id),

@@ -14,8 +14,8 @@ router = APIRouter(prefix="/customers", tags=["Customers"])
 @router.get(
     "/",
     response_model=t.List[schema.ICustomerOutFull],
-    response_model_exclude_unset=True
-    # dependencies=[Depends(dependency.require_super_admin_or_admin)]
+    response_model_exclude_unset=True,
+    dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_customers_list(
     filter: t.Optional[str] = Query(
@@ -48,7 +48,7 @@ async def get_customers_list(
 @router.get(
     "/total/count",
     response_model=ITotalCount,
-    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_total_customers() -> ITotalCount:
     return await service.get_total_customers()
@@ -57,7 +57,7 @@ async def get_total_customers() -> ITotalCount:
 @router.get(
     "/{customer_id}/permissions",
     response_model=t.List[IPermissionOut],
-    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_customer_permission(customer_id: uuid.UUID):
     return await service.get_customer_permissions(customer_id)
@@ -67,7 +67,7 @@ async def get_customer_permission(customer_id: uuid.UUID):
     "/permission",
     response_model=IResponseMessage,
     status_code=status.HTTP_200_OK,
-    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def update_customer_permission(
     data_in: schema.ICustomerRoleUpdate,
@@ -78,7 +78,7 @@ async def update_customer_permission(
 @router.delete(
     "/permission",
     status_code=status.HTTP_200_OK,
-    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def remove_customer_permission(
     data_in: schema.ICustomerRoleUpdate,
@@ -89,7 +89,7 @@ async def remove_customer_permission(
 @router.delete(
     "/",
     status_code=status.HTTP_200_OK,
-    # dependencies=[Depends(dependency.require_super_admin)],
+    dependencies=[Depends(dependency.require_super_admin)],
 )
 async def delete_customer(data_in: schema.ICustomerRemove) -> None:
     return await service.remove_customer_data(data_in=data_in)
@@ -99,7 +99,7 @@ async def delete_customer(data_in: schema.ICustomerRemove) -> None:
     "/{customer_id}",
     response_model=t.Union[schema.ICustomerOutFull, schema.ICustomerOut],
     status_code=status.HTTP_200_OK,
-    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_customer(
     customer_id: uuid.UUID,

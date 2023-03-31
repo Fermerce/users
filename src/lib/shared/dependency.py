@@ -32,8 +32,6 @@ class AppAuth:
                 algorithms=[base_config.algorithm],
             )
 
-            if payload is None:
-                raise credentials_exception
             if not payload.get("user_id", None):
                 raise credentials_exception
             return payload
