@@ -14,9 +14,9 @@ def send_customer_activation_email(customer: dict):
         "url": url,
         "button_label": "confirm",
         "title": "Email confirmation link",
-        "description": f"""Hello {customer.get('full_name')}, 
+        "description": f"""Hello {customer.get('full_name')},
         Welcome to <b>{config.project_name}</b>,
-            kindly click on the link below to activate your account 
+            kindly click on the link below to activate your account
             <b> <a href='{url}'>{url}</a>""",
     }
 
@@ -91,7 +91,7 @@ async def send_verify_customer_password_reset(customer: dict):
             "url": url,
             "button_label": "reset password",
             "title": "password reset link",
-            "description": f"""{customer.get('full_name')} we notice someone try to change your details , 
+            "description": f"""{customer.get('full_name')} we notice someone try to change your details,
              if not you click on the link below to reset you password
              <br><a href='{url}'>{url}</a>""",
         }

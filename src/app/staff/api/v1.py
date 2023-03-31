@@ -76,8 +76,6 @@ async def auth_login_token_refresh(data_in: IRefreshToken, request: Request):
     return await service.login_token_refresh(data_in=data_in, request=request)
 
 
-@router.post(
-    "/check/dev", status_code=status.HTTP_200_OK, response_model=IResponseMessage
-)
+@router.post("/check/dev", status_code=status.HTTP_200_OK, response_model=IResponseMessage)
 async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:
     return await service.check_user_email(data_in)

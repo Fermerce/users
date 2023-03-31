@@ -16,7 +16,7 @@ def send_staff_activation_email(staff: dict):
         "title": "Email confirmation link",
         "description": f"""Hello {staff.get('full_name')}, 
         Welcome to <b>{config.project_name}</b>,
-            kindly click on the link below to activate your account 
+            kindly click on the link below to activate your account
             <b> <a href='{url}'>{url}</a>""",
     }
 
@@ -73,7 +73,7 @@ async def send_verify_staff_password_reset(staff: dict):
             "url": url,
             "button_label": "reset password",
             "title": "password reset link",
-            "description": f"""{staff.get('full_name')} your password was reset successfully, 
+            "description": f"""{staff.get('full_name')} your password was reset successfully,
              if not you please contact admin, <br><a href='{url}'>{url}</a>""",
         }
         new_mail = Mailer(
