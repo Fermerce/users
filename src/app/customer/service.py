@@ -1,9 +1,12 @@
 import typing as t
 import uuid
-from fastapi import status
+from fastapi import Request, status
 from fastapi import Response
-from src._base.enum.sort_type import SortOrder
+from src._base.enum.sort_type import SearchType, SortOrder
 from src._base.schema.response import ITotalCount, IResponseMessage
+from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+from src.app.auth import service as auth_service
 from src.app.permission.model import Permission
 from src.lib.errors import error
 from src.app.customer import schema, model
@@ -11,6 +14,8 @@ from src.app.customer.repository import customer_repo
 from src.app.permission.repository import permission_repo
 from src._taskiq.user import tasks
 from src.lib.utils import security
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+from src.app.auth import service as auth_service
 
 
 async def create(data_in=schema.ICustomerIn):
@@ -292,3 +297,40 @@ async def remove_customer_permissions(
         customer_id=data_in.customer_id, permission_objs=check_perm
     )
     return IResponseMessage(message="Customer permission was updated successfully")
+
+
+async def login(
+    request: Request, data_in: OAuth2PasswordRequestForm
+) -> t.Union[IToken, IResponseMessage]:
+    check_user = await customer_repo.get_by_attr(
+        attr=dict(username=data_in.username, email=data_in.username),
+        first=True,
+        search_mode=SearchType._or,
+    )
+    if not check_user:
+        raise error.UnauthorizedError(detail="incorrect email or password")
+    if not check_user.check_password(data_in.password):
+        raise error.UnauthorizedError(detail="incorrect email or password")
+    if not check_user.is_verified:
+        await tasks.send_customer_activation_email.kiq(
+            dict(email=data_in.username, id=str(check_user.id))
+        )
+        return IResponseMessage(
+            message="Your is not verified, Please check your for verification link before continuing"
+        )
+    return await auth_service.auth_login(request=request, user_id=str(check_user.id))
+
+
+async def login_token_refresh(data_in: IRefreshToken, request: Request) -> IToken:
+    return await auth_service.auth_login_token_refresh(data_in=data_in, request=request)
+
+
+async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:
+    check_user = await customer_repo.get_by_attr(
+        attr=dict(email=data_in.username, username=data_in.username),
+        first=True,
+        search_mode="or",
+    )
+    if not check_user:
+        raise error.NotFoundError()
+    return IResponseMessage(message="Account exists")

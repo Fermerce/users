@@ -1,9 +1,12 @@
 import typing as t
-from fastapi import APIRouter, Depends, status
-from src.app.customer import schema, service, dependency
+from fastapi import APIRouter, Depends, Request, status
+from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
+from src.app.customer import dependency, schema, service
 from src._base.schema.response import IResponseMessage
 from src.app.customer.model import Customer
 from src.lib.errors import error
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+
 
 router = APIRouter(prefix="/customers", tags=["Customers"])
 
@@ -56,3 +59,33 @@ async def update_customer_password_no_token(
     user_data: Customer = Depends(dependency.require_customer),
 ) -> IResponseMessage:
     return await service.update_customer_password_no_token(data_in, user_data)
+
+
+@router.post(
+    "/login",
+    response_model=t.Union[IToken, IResponseMessage],
+    status_code=status.HTTP_200_OK,
+)
+async def login(
+    request: Request,
+    data_in: OAuth2PasswordRequestForm = Depends(),
+) -> t.Union[IToken, IResponseMessage]:
+    result = await service.login(data_in=data_in, request=request)
+
+    return result
+
+
+@router.post(
+    "/token-refresh",
+    response_model=IToken,
+    status_code=status.HTTP_200_OK,
+)
+async def login_token_refresh(data_in: IRefreshToken, request: Request):
+    return await service.login_token_refresh(data_in=data_in, request=request)
+
+
+@router.post(
+    "/check/dev", status_code=status.HTTP_200_OK, response_model=IResponseMessage
+)
+async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:
+    return await service.check_user_email(data_in)

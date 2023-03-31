@@ -53,9 +53,7 @@ class CustomerRepository(BaseRepository[model.Customer]):
                     existed_perms.add(permission.name)
                     permission_objs.pop(permission_objs.index(permission))
         if len(existed_perms) > 0:
-            raise error.DuplicateError(
-                f"`{','.join(existed_perms)}`role/roles already exists"
-            )
+            raise error.DuplicateError(f"`{','.join(existed_perms)}`role/roles already exists")
 
         customer.permissions.extend(permission_objs)
         self.db.add(customer)
@@ -98,9 +96,7 @@ class CustomerRepository(BaseRepository[model.Customer]):
         await self.db.commit()
         return customer
 
-    async def activate(
-        self, customer: model.Customer, mode: bool = True
-    ) -> model.Customer:
+    async def activate(self, customer: model.Customer, mode: bool = True) -> model.Customer:
         customer.is_active = mode
         customer.is_verified = mode
         customer.is_suspended = mode
@@ -108,9 +104,7 @@ class CustomerRepository(BaseRepository[model.Customer]):
         await self.db.commit()
         return customer
 
-    async def delete(
-        self, customer: model.Customer, permanent: bool = False
-    ) -> model.Customer:
+    async def delete(self, customer: model.Customer, permanent: bool = False) -> model.Customer:
         if permanent:
             await super().delete(id=str(customer.id))
             return True

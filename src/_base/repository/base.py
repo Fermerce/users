@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from src.lib.db.primary_key import Base
 
 from src.lib.db.config import async_session
-from src._base.enum.sort_type import SortOrder
+from src._base.enum.sort_type import SortOrder, SearchType
 from src.lib.utils.random_string import random_str
 
 ModelType = t.TypeVar("ModelType", bound=Base)
@@ -227,6 +227,7 @@ class BaseRepository(t.Generic[ModelType]):
         attr: dict,
         first: bool = False,
         load_related: bool = False,
+        search_mode: SearchType = SearchType._and,
         expunge: bool = True,
     ) -> t.Union[ModelType, t.List[ModelType]]:
         if isinstance(attr, dict):
@@ -244,10 +245,18 @@ class BaseRepository(t.Generic[ModelType]):
                 stmt = (
                     sa.select(self.model)
                     .options(sa.orm.selectinload("*"))
-                    .where(sa.and_(*filters))
+                    .where(
+                        sa.and_(*filters)
+                        if search_mode == SearchType._and
+                        else sa.or_(*filters)
+                    )
                 )
             else:
-                stmt = sa.select(self.model).where(sa.and_(*filters))
+                stmt = sa.select(self.model).where(
+                    sa.and_(*filters)
+                    if search_mode == SearchType._and
+                    else sa.or_(*filters)
+                )
 
             results = await self.db.execute(stmt)
             if expunge:

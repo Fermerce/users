@@ -1,9 +1,10 @@
 import typing as t
 import uuid
-from fastapi import status
+from fastapi import Request, status
 from fastapi import Response
 from src._base.enum.sort_type import SortOrder
 from src._base.schema.response import ITotalCount, IResponseMessage
+from src._taskiq.user.tasks import send_customer_activation_email
 from src.app.permission.model import Permission
 from src.lib.errors import error
 from src.app.staff import schema, model
@@ -11,6 +12,9 @@ from src.app.staff.repository import staff_repo
 from src._taskiq.staff import tasks
 from src.app.permission.repository import permission_repo
 from src.lib.utils import security
+from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+from src.app.auth import service as auth_service
 
 
 async def create(
@@ -218,3 +222,36 @@ async def remove_staff_permissions(
         staff_id=get_staff.id, permission_objs=check_perms
     )
     return IResponseMessage(message="Staff role was updated successfully")
+
+
+async def login(
+    request: Request, data_in: OAuth2PasswordRequestForm
+) -> t.Union[IToken, IResponseMessage]:
+    check_staff = await staff_repo.get_by_attr(
+        attr=dict(email=data_in.username), first=True
+    )
+    if not check_staff:
+        raise error.UnauthorizedError(detail="incorrect email or password")
+    if not check_staff.check_password(data_in.password):
+        raise error.UnauthorizedError(detail="incorrect email or password")
+    if not check_staff.is_verified:
+        await send_customer_activation_email.kiq(
+            dict(email=data_in.username, id=str(check_staff.id))
+        )
+        return IResponseMessage(
+            message="Your is not verified, Please check your for verification link before continuing"
+        )
+    return await auth_service.auth_login(request=request, user_id=str(check_staff.id))
+
+
+async def login_token_refresh(data_in: IRefreshToken, request: Request) -> IToken:
+    return await auth_service.auth_login_token_refresh(data_in=data_in, request=request)
+
+
+async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:
+    check_staff = await staff_repo.get_by_attr(
+        attr=dict(email=data_in.username), first=True
+    )
+    if not check_staff:
+        raise error.NotFoundError()
+    return IResponseMessage(message="Account exists")

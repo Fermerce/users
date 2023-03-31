@@ -8,9 +8,7 @@ from src._base.settings import config
 
 @broker.task(delay=2, priority=1)
 def send_customer_activation_email(customer: dict):
-    token: str = security.JWTAUTH.data_encoder(
-        data={"user_id": str(customer.get("id"))}
-    )
+    token: str = security.JWTAUTH.data_encoder(data={"user_id": str(customer.get("id"))})
     url = f"{config.project_url}/auth/activateAccount?activate_token={token}&auth_type=customer"
     mail_template_context = {
         "url": url,
@@ -34,9 +32,7 @@ def send_customer_activation_email(customer: dict):
 
 @broker.task(delay=2)
 def send_email_verification_email(customer: dict):
-    token: str = security.JWTAUTH.data_encoder(
-        data={"user_id": str(customer.get("id"))}
-    )
+    token: str = security.JWTAUTH.data_encoder(data={"user_id": str(customer.get("id"))})
     url = f"{config.project_url}/auth/activateAccount?activate_token={token}&auth_type=customer"
     mail_template_context = {
         "url": url,
@@ -62,9 +58,7 @@ async def send_customer_password_reset_link(customer: dict):
     user_id = customer.get("id")
     get_user = await customer_repo.get(id=user_id)
     if get_user:
-        token = security.JWTAUTH.data_encoder(
-            data={"user_id": user_id}, duration=timedelta(days=1)
-        )
+        token = security.JWTAUTH.data_encoder(data={"user_id": user_id}, duration=timedelta(days=1))
         customer_repo.update(customer=get_user, obj={"password_reset_token": token})
         url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=customer"
 
@@ -89,12 +83,8 @@ async def send_verify_customer_password_reset(customer: dict):
     user_id = customer.get("id")
     get_user = await customer_repo.get(id=user_id)
     if get_user:
-        token = security.JWTAUTH.data_encoder(
-            data={"user_id": user_id}, duration=timedelta(days=1)
-        )
-        await customer_repo.update(
-            customer=get_user, obj=dict(password_reset_token=token)
-        )
+        token = security.JWTAUTH.data_encoder(data={"user_id": user_id}, duration=timedelta(days=1))
+        await customer_repo.update(customer=get_user, obj=dict(password_reset_token=token))
         url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=customer"
 
         mail_template_context = {

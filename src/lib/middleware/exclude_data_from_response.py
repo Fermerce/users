@@ -29,13 +29,9 @@ async def pop_exclude(response_body, exclude_keys: List[str]) -> None:
                 item = remove_exclude_from_dict(exclude_list=exclude_keys, data=item)
                 for _, value in item.items():
                     if isinstance(value, list):
-                        value = remove_exclude_from_list(
-                            exclude_list=exclude_keys, data=value
-                        )
+                        value = remove_exclude_from_list(exclude_list=exclude_keys, data=value)
                     elif isinstance(value, dict):
-                        value = remove_exclude_from_dict(
-                            exclude_list=exclude_keys, data=value
-                        )
+                        value = remove_exclude_from_dict(exclude_list=exclude_keys, data=value)
     elif isinstance(data, dict):
         data = remove_exclude_from_dict(exclude_list=exclude_keys, data=data)
         for _, value in data.items():

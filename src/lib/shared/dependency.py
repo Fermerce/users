@@ -11,7 +11,7 @@ from src.lib.db.primary_key import Base
 
 
 Oauth_schema = OAuth2PasswordBearer(
-    tokenUrl=f"{get_api_prefix.get_prefix()}/auth/login"
+    tokenUrl=f"{get_api_prefix.get_prefix()}/staff/login"
 )
 
 

@@ -48,9 +48,7 @@ async def require_dispatcher(get_user: dict = Depends(AppAuth.authenticate)):
 
 
 async def require_staff_data_all(get_user: dict = Depends(AppAuth.authenticate)):
-    data = await __staff_write.current_user_with_data(
-        user_id=get_user.get("user_id", None)
-    )
+    data = await __staff_write.current_user_with_data(user_id=get_user.get("user_id", None))
     return data
 
 
