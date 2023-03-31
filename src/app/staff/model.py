@@ -1,8 +1,31 @@
 from src.lib.db.primary_key import Base, sa
 from sqlalchemy.orm import relationship
 from src.lib.utils.password_hasher import Hasher
-from src.app.staff.associate_model import staff_role_association_table
 from src.lib.utils.random_string import random_str
+
+
+staff_role_association_table = sa.Table(
+    "staff_role_association",
+    Base.metadata,
+    sa.Column(
+        "staff_id",
+        sa.ForeignKey(
+            "staff.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+    sa.Column(
+        "permission_id",
+        sa.ForeignKey(
+            "permission.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+)
 
 
 class Staff(Base):

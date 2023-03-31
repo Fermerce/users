@@ -3,7 +3,7 @@ import os
 import typing as t
 import socket
 import importlib.util
-from src.taskiq.config import connection
+from src._taskiq.config import connection
 import kombu
 
 

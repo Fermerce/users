@@ -1,16 +1,20 @@
 import typing as t
 import uuid
-from fastapi import status
+from fastapi import Request, status
 from fastapi import Response
 from src._base.enum.sort_type import SortOrder
 from src._base.schema.response import ITotalCount, IResponseMessage
+from src._taskiq.user.tasks import send_customer_activation_email
 from src.app.permission.model import Permission
 from src.lib.errors import error
 from src.app.staff import schema, model
 from src.app.staff.repository import staff_repo
-from src.taskiq.staff import tasks
+from src._taskiq.staff import tasks
 from src.app.permission.repository import permission_repo
 from src.lib.utils import security
+from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+from src.app.auth import service as auth_service
 
 
 async def create(
@@ -21,7 +25,7 @@ async def create(
         raise error.DuplicateError("Staff already exist")
     new_Staff = await staff_repo.create(data_in)
     if new_Staff:
-        await tasks.send_staff_activation_email.kicker().with_labels(delay=1).kiq(
+        await tasks.send_staff_activation_email.kiq(
             staff=dict(
                 email=new_Staff.email,
                 id=str(new_Staff.id),
@@ -79,7 +83,7 @@ async def reset_password_link(
     staff_obj = await staff_repo.get_by_email(email=staff_data.email)
     if not staff_obj:
         raise error.NotFoundError("Staff not found")
-    await tasks.send_staff_password_reset_link.kicker().with_labels(delay=1).kiq(
+    await tasks.send_staff_password_reset_link.kiq(
         dict(
             email=staff_obj.email,
             id=str(staff_obj.id),
@@ -104,9 +108,7 @@ async def update_staff_password(
         if staff_obj.check_password(staff_data.password.get_secret_value()):
             raise error.BadDataError("Try another password you have not used before")
         if await staff_repo.update_password(staff_obj, staff_data):
-            await tasks.send_verify_staff_password_reset.kicker().with_labels(
-                delay=3, priority=4
-            ).kiq(
+            await tasks.send_verify_staff_password_reset.kiq(
                 dict(
                     email=staff_obj.email,
                     id=str(staff_obj.id),
@@ -126,7 +128,7 @@ async def update_staff_password_tno_token(
     if staff_obj.check_password(staff_data.password.get_secret_value()):
         raise error.BadDataError("Try another password you have not used before")
     if await staff_repo.update_password(staff_obj, staff_data):
-        await tasks.send_verify_staff_password_reset.kicker().with_labels(delay=3, priority=4).kiq(
+        await tasks.send_verify_staff_password_reset.kiq(
             dict(
                 email=staff_obj.email,
                 id=str(staff_obj.id),
@@ -185,7 +187,9 @@ async def add_staff_permission(
     get_staff = await staff_repo.get(data_in.staff_id)
     if not get_staff:
         raise error.NotFoundError("Staff not found")
-    get_perms = await permission_repo.get_by_props(prop_name="id", prop_values=data_in.permissions)
+    get_perms = await permission_repo.get_by_props(
+        prop_name="id", prop_values=data_in.permissions
+    )
     if not get_perms:
         raise error.NotFoundError("permissions not found")
     update_Staff = await staff_repo.add_staff_permissions(
@@ -214,5 +218,40 @@ async def remove_staff_permissions(
     check_perms = await permission_repo.get_by_ids(data_in.permissions)
     if not check_perms:
         raise error.NotFoundError(detail=" Permission not found")
-    await staff_repo.remove_staff_permission(staff_id=get_staff.id, permission_objs=check_perms)
+    await staff_repo.remove_staff_permission(
+        staff_id=get_staff.id, permission_objs=check_perms
+    )
     return IResponseMessage(message="Staff role was updated successfully")
+
+
+async def login(
+    request: Request, data_in: OAuth2PasswordRequestForm
+) -> t.Union[IToken, IResponseMessage]:
+    check_staff = await staff_repo.get_by_attr(
+        attr=dict(email=data_in.username), first=True
+    )
+    if not check_staff:
+        raise error.UnauthorizedError(detail="incorrect email or password")
+    if not check_staff.check_password(data_in.password):
+        raise error.UnauthorizedError(detail="incorrect email or password")
+    if not check_staff.is_verified:
+        await send_customer_activation_email.kiq(
+            dict(email=data_in.username, id=str(check_staff.id))
+        )
+        return IResponseMessage(
+            message="Your is not verified, Please check your for verification link before continuing"
+        )
+    return await auth_service.auth_login(request=request, user_id=str(check_staff.id))
+
+
+async def login_token_refresh(data_in: IRefreshToken, request: Request) -> IToken:
+    return await auth_service.auth_login_token_refresh(data_in=data_in, request=request)
+
+
+async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:
+    check_staff = await staff_repo.get_by_attr(
+        attr=dict(email=data_in.username), first=True
+    )
+    if not check_staff:
+        raise error.NotFoundError()
+    return IResponseMessage(message="Account exists")

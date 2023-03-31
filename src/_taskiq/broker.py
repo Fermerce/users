@@ -1,7 +1,7 @@
 import sys
 import time
-from src.taskiq._repository import consumer_list
-from src.taskiq.config import connection
+from src._taskiq._repository import consumer_list
+from src._taskiq.config import connection
 from src._base.settings import config
 from taskiq_aio_pika import AioPikaBroker
 

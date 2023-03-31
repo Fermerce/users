@@ -9,7 +9,7 @@ class IToken(pyd.BaseModel):
 
 
 class ICheckUserEmail(pyd.BaseModel):
-    email: str
+    username: t.Optional[str]
 
 
 class IToEncode(pyd.BaseModel):

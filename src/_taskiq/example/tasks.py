@@ -1,7 +1,7 @@
 import json
-from src.taskiq.broker import broker
-from src.taskiq.utils import create_producer
-from src.taskiq.example.queue import test_queue
+from src._taskiq.broker import broker
+from src._taskiq.utils import create_producer
+from src._taskiq.example.queue import test_queue
 
 
 # Define a task that will be performed by the worker

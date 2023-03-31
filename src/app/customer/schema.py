@@ -5,31 +5,52 @@ from src.app.permission import schema as perm_schema
 
 
 class IBaseCustomer(pyd.BaseModel):
-    firstname: pyd.constr(
-        strip_whitespace=True,
-        to_lower=True,
-        max_length=15,
-        min_length=2,
-    )
-    lastname: pyd.constr(
-        strip_whitespace=True,
-        to_lower=True,
-        max_length=15,
-        min_length=2,
-    )
+    firstname: t.Optional[
+        pyd.constr(
+            strip_whitespace=True,
+            to_lower=True,
+            max_length=15,
+            min_length=2,
+        )
+    ]
+    lastname: t.Optional[
+        pyd.constr(
+            strip_whitespace=True,
+            to_lower=True,
+            max_length=15,
+            min_length=2,
+        )
+    ]
     email: pyd.EmailStr
+    username: str
 
 
 class ICustomerIn(IBaseCustomer):
+    username: str
+    email: pyd.EmailStr
     password: pyd.SecretStr
 
     class Config:
         schema_extra = {
             "example": {
-                "firstname": "John",
-                "lastname": "Doe",
+                "username": {"required": False, "example": "jonD"},
                 "email": "john@doe.com",
                 "password": "****************",
+            }
+        }
+
+
+class ICustomerUpdateIn(IBaseCustomer):
+    id: uuid.UUID
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": str(uuid.uuid4()),
+                "firstname": {"required": False, "example": "John"},
+                "lastname": {"required": False, "example": "doe"},
+                "username": {"required": False, "example": "jonD"},
+                "email": "john@doe.com",
             }
         }
 
@@ -47,6 +68,7 @@ class ICustomerOut(IBaseCustomer):
                 "id": "2345678-1234-1234-1234-123456789abc",
                 "firstname": "John",
                 "lastname": "Doe",
+                "username": "JonD",
                 "email": "john@doe.com",
                 "password": "****************",
             }
@@ -54,7 +76,9 @@ class ICustomerOut(IBaseCustomer):
 
 
 class ICustomerOutFull(IBaseCustomer):
-    id: uuid.UUID
+    email: t.Optional[pyd.EmailStr]
+    username: t.Optional[str]
+    id: t.Optional[uuid.UUID]
     is_active: t.Optional[bool] = False
     is_suspended: t.Optional[bool] = False
     is_verified: t.Optional[bool] = False
@@ -68,7 +92,6 @@ class ICustomerOutFull(IBaseCustomer):
                 "firstname": "John",
                 "lastname": "Doe",
                 "email": "john@doe.com",
-                "password": "****************",
             }
         }
 
@@ -102,3 +125,4 @@ class ICustomerResetPassword(pyd.BaseModel):
 
 class ICustomerResetPasswordNoToken(pyd.BaseModel):
     password: pyd.SecretStr
+    old_password: pyd.SecretStr

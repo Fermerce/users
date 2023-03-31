@@ -13,6 +13,8 @@ router = APIRouter(prefix="/customers", tags=["Customers"])
 
 @router.get(
     "/",
+    response_model=t.List[schema.ICustomerOutFull],
+    response_model_exclude_unset=True
     # dependencies=[Depends(dependency.require_super_admin_or_admin)]
 )
 async def get_customers_list(
@@ -29,6 +31,7 @@ async def get_customers_list(
     ),
     order_by: t.Optional[str] = Query(default="id", description="order by attribute, e.g. id"),
     is_active: t.Optional[bool] = True,
+    load_related: t.Optional[bool] = False,
 ):
     return await service.filter(
         filter=filter,
@@ -38,6 +41,7 @@ async def get_customers_list(
         sort_by=sort_by,
         order_by=order_by,
         is_active=is_active,
+        load_related=load_related,
     )
 
 

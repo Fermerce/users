@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src._base.settings import config
-from src.taskiq.broker import broker
+from src._taskiq.broker import broker
 from src.lib.middleware.exclude_data_from_response import (
     exclude_keys_middleware,
 )
@@ -31,8 +31,8 @@ def get_application():
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    _app.middleware("http")(exclude_keys_middleware(["password"]))
-    _app.middleware("http")(response_data_transformer)
+    # _app.middleware("http")(exclude_keys_middleware(["password"]))
+    # _app.middleware("http")(response_data_transformer)
 
     return _app
 
