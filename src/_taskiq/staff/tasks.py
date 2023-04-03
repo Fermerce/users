@@ -1,5 +1,5 @@
 from datetime import timedelta
-from src.app.staff.repository import staff_repo
+from src.app.users.staff.repository import staff_repo
 from src._taskiq.broker import broker
 from src.lib.shared.mail.mailer import Mailer
 from src.lib.utils import security
@@ -38,7 +38,9 @@ async def send_staff_password_reset_link(staff: dict):
         token = security.JWTAUTH.data_encoder(
             data={"staff_id": staff_id}, duration=timedelta(days=1)
         )
-        result = await staff_repo.update(staff=get_staff, obj=dict(password_reset_token=token))
+        result = await staff_repo.update(
+            staff=get_staff, obj=dict(password_reset_token=token)
+        )
         print(result.password_reset_token)
         url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=staff"
 

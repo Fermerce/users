@@ -3,14 +3,16 @@ import jose
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from src._base.repository.base import BaseRepository
-from src.app.permission.model import Permission
+from src.app.users.permission.model import Permission
 from src.lib.errors import error
 from src._base.settings import config as base_config
 from src.lib.utils import get_api_prefix
 from src.lib.db.primary_key import Base
 
 
-Oauth_schema = OAuth2PasswordBearer(tokenUrl=f"{get_api_prefix.get_prefix()}/staff/login")
+Oauth_schema = OAuth2PasswordBearer(
+    tokenUrl=f"{get_api_prefix.get_prefix()}/staff/login"
+)
 
 
 class AppAuth:
@@ -58,7 +60,9 @@ class AppWrite(t.Generic[ModelType]):
     async def get_permissions(
         self, db_column_name: str = "permissions", user_id: str = None
     ) -> ModelType:
-        check_user: ModelType = await self.get_user_data(user_id=user_id, load_related=True)
+        check_user: ModelType = await self.get_user_data(
+            user_id=user_id, load_related=True
+        )
         if not check_user:
             raise error.UnauthorizedError("Authorization failed")
         if hasattr(check_user, db_column_name):
@@ -90,7 +94,9 @@ class AppWrite(t.Generic[ModelType]):
     async def current_user_with_data(self, user_id: str = None):
         if not user_id:
             raise error.UnauthorizedError("Authorization failed")
-        active_user: ModelType = await self.get_user_data(user_id=user_id, load_related=True)
+        active_user: ModelType = await self.get_user_data(
+            user_id=user_id, load_related=True
+        )
         if active_user:
             return active_user
         raise error.UnauthorizedError("Authorization failed")

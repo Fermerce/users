@@ -5,7 +5,8 @@ import sqlalchemy as sa
 from pydantic import BaseModel
 from fastapi import HTTPException
 from src.lib.db.primary_key import Base
-from src.lib.db.config import Async_session
+
+from src.lib.db.config import async_session, AsyncSession
 from src._base.enum.sort_type import SortOrder, SearchType
 from src.lib.utils.random_string import random_str
 
@@ -15,13 +16,6 @@ ModelType = t.TypeVar("ModelType", bound=Base)
 class BaseRepository(t.Generic[ModelType]):
     def __init__(self, model: t.Type[ModelType]):
         self.model = model
-        self.db = Async_session()
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.db.close()
 
     def make_slug(self, name: str, random_length: int = 10) -> str:
         slug = f"{name.replace(' ', '-').replace('_', '-')[:30]}-{random_str(random_length).strip().lower()}"
@@ -31,8 +25,10 @@ class BaseRepository(t.Generic[ModelType]):
         select = [item.strip() for item in select.split(",") if select is not None]
         return select
 
+    @async_session
     async def get(
         self,
+        session: AsyncSession,
         id: UUID,
         load_related: bool = False,
         expunge: bool = True,
@@ -44,30 +40,35 @@ class BaseRepository(t.Generic[ModelType]):
                 .options(sa.orm.selectinload("*"))
                 .where(self.model.id == str(id))
             )
-            result = await self.db.execute(stmt)
+            result = await session.execute(stmt)
             if result:
                 if expunge:
-                    self.db.expunge_all()
+                    session.expunge_all()
                 return result.scalar()
             return None
         else:
             stmt = sa.select(self.model).where(self.model.id == str(id))
-            result = await self.db.execute(stmt)
+            result = await session.execute(stmt)
             if result is None:
                 return None
             if expunge:
-                self.db.expunge_all()
+                session.expunge_all()
             return result.scalars().first()
 
-    async def get_by_id(self, id: UUID, expunge: bool = True) -> ModelType:
+    @async_session
+    async def get_by_id(
+        self, session: AsyncSession, id: UUID, expunge: bool = True
+    ) -> ModelType:
         stm = sa.select(self.model).where(self.model.id == id)
-        get_cat = await self.db.execute(stm)
+        get_cat = await session.execute(stm)
         if expunge:
-            self.db.expunge_all()
+            session.expunge_all()
         return get_cat.scalar()
 
+    @async_session
     async def get_by_props(
         self,
+        session: AsyncSession,
         prop_name: str,
         prop_values: t.List[str],
         load_related: bool = False,
@@ -94,13 +95,15 @@ class BaseRepository(t.Generic[ModelType]):
         if load_related:
             stm = stm.options(sa.orm.selectinload("*"))
         stm = sa.select(self.model).where(prop_column.in_(prop_values))
-        get_cats = await self.db.execute(stm)
+        get_cats = await session.execute(stm)
         if expunge:
-            self.db.expunge_all()
+            session.expunge_all()
         return get_cats.scalars().all()
 
+    @async_session
     async def get_by_ids(
         self,
+        session: AsyncSession,
         ids: t.List[UUID],
         load_related: bool = False,
         expunge: bool = True,
@@ -109,13 +112,15 @@ class BaseRepository(t.Generic[ModelType]):
         if load_related:
             query = query.options(sa.orm.selectinload("*"))
         query = query.where(self.model.id.in_([str(id) for id in ids]))
-        results = await self.db.execute(query)
+        results = await session.execute(query)
         if expunge:
-            self.db.expunge_all()
+            session.expunge_all()
         return results.scalars().all()
 
+    @async_session
     async def update(
         self,
+        session: AsyncSession,
         id: UUID,
         obj: t.Union[dict, BaseModel],
         expunge: bool = True,
@@ -126,46 +131,55 @@ class BaseRepository(t.Generic[ModelType]):
             .values(obj.dict() if isinstance(obj, BaseModel) else obj)
             .returning(self.model)
         )
-        result = await self.db.execute(stmt)
-        await self.db.commit()
+        result = await session.execute(stmt)
+        await session.commit()
         if expunge:
-            self.db.expunge_all()
+            session.expunge_all()
         return result.scalar_one_or_none()
 
-    async def delete(self, id: UUID, expunge: bool = True) -> t.Optional[ModelType]:
-        result = await self.db.execute(
+    @async_session
+    async def delete(
+        self, session: AsyncSession, id: UUID, expunge: bool = True
+    ) -> t.Optional[ModelType]:
+        result = await session.execute(
             sa.select(self.model).where(self.model.id == str(id))
         )
         row = result.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Object not found")
-        stmt = sa.delete(self.model).where(self.model.id == str(id))
-        await self.db.execute(stmt)
-        await self.db.commit()
+        await session.execute(sa.delete(self.model).where(self.model.id == str(id)))
+        await session.commit()
         if expunge:
-            self.db.expunge_all()
+            session.expunge_all()
         return row
 
-    async def delete_many(self, ids: t.List[UUID], expunge: bool = True) -> int:
+    @async_session
+    async def delete_many(
+        self, session: AsyncSession, ids: t.List[UUID], expunge: bool = True
+    ) -> int:
         if not ids:
             return 0
         stmt = sa.delete(self.model).where(self.model.id.in_(ids))
-        result = await self.db.execute(stmt)
-        await self.db.commit()
+        result = await session.execute(stmt)
+        await session.commit()
         if expunge:
-            self.db.expunge_all()
+            session.expunge_all()
         return result.rowcount
 
-    async def get_count(self, expunge: bool = True) -> t.Optional[int]:
+    @async_session
+    async def get_count(
+        self, session: AsyncSession, expunge: bool = True
+    ) -> t.Optional[int]:
         stm = sa.select(sa.func.count(self.model.id))
-        result = await self.db.execute(stm)
+        result = await session.execute(stm)
         if expunge:
-            self.db.expunge_all()
+            session.expunge_all()
         count = result.scalar()
         return count if count is not None else None
 
+    @async_session
     async def create(
-        self, obj: t.Union[dict, BaseModel], expunge: bool = True
+        self, session: AsyncSession, obj: t.Union[dict, BaseModel], expunge: bool = True
     ) -> ModelType:
         to_create = {}
         if isinstance(obj, BaseModel):
@@ -179,21 +193,23 @@ class BaseRepository(t.Generic[ModelType]):
         }
         try:
             result = self.model(**to_create_filtered)
-            self.db.add(result)
-            await self.db.commit()
-            await self.db.refresh(result)
+            session.add(result)
+            await session.commit()
+            await session.refresh(result)
             if expunge:
-                self.db.expunge_all()
+                session.expunge_all()
             return result
         except sa.exc.IntegrityError as e:
-            await self.db.rollback()
+            await session.rollback()
             if "duplicate key" in str(e):
                 raise HTTPException(status_code=409, detail="Conflict error")
             else:
                 raise e
 
+    @async_session
     async def create_many(
         self,
+        session: AsyncSession,
         objs: t.List[t.Union[dict, BaseModel]],
         expunge: bool = True,
     ) -> t.List[ModelType]:
@@ -217,20 +233,22 @@ class BaseRepository(t.Generic[ModelType]):
 
         try:
             stmt = sa.insert(self.model).values(to_create_list)
-            result = await self.db.execute(stmt)
-            await self.db.commit()
+            result = await session.execute(stmt)
+            await session.commit()
             if expunge:
-                self.db.expunge_all()
+                session.expunge_all()
             return result
         except sa.exc.IntegrityError as e:
-            await self.db.rollback()
+            await session.rollback()
             if "duplicate key" in str(e):
                 raise HTTPException(status_code=409, detail="Conflict Error")
             else:
                 raise e
 
+    @async_session
     async def get_by_attr(
         self,
+        session: AsyncSession,
         attr: dict,
         first: bool = False,
         load_related: bool = False,
@@ -265,16 +283,18 @@ class BaseRepository(t.Generic[ModelType]):
                     else sa.or_(*filters)
                 )
 
-            results = await self.db.execute(stmt)
+            results = await session.execute(stmt)
             if expunge:
-                self.db.expunge_all()
+                session.expunge_all()
             if first:
                 return results.scalar()
             return results.scalars().all()
         raise Exception(f"dictionary is expected, but {type(attr)} is passed")
 
+    @async_session
     async def filter(
         self,
+        session: AsyncSession,
         filter_string: str = None,
         select_columns=None,
         page=1,
@@ -345,11 +365,11 @@ class BaseRepository(t.Generic[ModelType]):
                 elif hasattr(self.model, column) and sort_by == SortOrder.asc:
                     select_obj = select_obj.order_by(getattr(self.model, column))
 
-        results = await self.db.execute(
+        results = await session.execute(
             select_obj.limit(per_page).offset((page - 1) * per_page)
         )
         if expunge:
-            self.db.expunge_all()
+            session.expunge_all()
         results = [row._asdict() for row in results]
         if results:
             if not select_columns:

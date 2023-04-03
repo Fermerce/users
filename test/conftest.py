@@ -20,14 +20,13 @@ def get_faker():
     return faker
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(autouse=True)
 def db_engine():
     if env and env == "testing":
         alembic_cfg = Config("alembic.ini")
         alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
         command.upgrade(alembic_cfg, "head")
         yield
-        command.downgrade(alembic_cfg, "head")
 
 
 @pytest_asyncio.fixture
@@ -41,6 +40,6 @@ async def get_session() -> AsyncSession:
 
 @pytest_asyncio.fixture
 async def client() -> t.AsyncIterator[httpx.AsyncClient]:
-    async with httpx.AsyncClient(app=main.app, base_url="http://testserver") as client:
+    async with httpx.AsyncClient(app=main.app, base_url="http://test") as client:
         client.base_url = str(client.base_url).rstrip("/") + "/"
         yield client
