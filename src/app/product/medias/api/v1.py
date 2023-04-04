@@ -2,39 +2,39 @@ import typing as t
 import uuid
 from fastapi import APIRouter, Depends, Query, status
 from src._base.schema.response import ITotalCount
-from src.app.product.type import schema, service
+from src.app.product.medias import schema, service
 from src._base.enum.sort_type import SortOrder
 from src.app.users.staff.dependency import require_super_admin_or_admin
 
 
-router = APIRouter(prefix="/types", tags=["Product Types"])
+router = APIRouter(prefix="/statics", tags=["Product statics files"])
 
 
 @router.post(
     "/",
-    # response_model=schema.IProductTypeOut,
+    # response_model=schema.IProductMediaIn,
     status_code=status.HTTP_201_CREATED,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def create_type(
-    data_in: schema.IProductTypeIn,
-) -> schema.IProductTypeOut:
+async def create_permission(
+    data_in: schema.IProductMediaIn,
+) -> schema.IProductMediaIn:
     return await service.create(data_in=data_in)
 
 
 @router.get(
     "/",
-    response_model=list[schema.IProductTypeOut],
+    response_model=list[schema.IProductMediaIn],
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_type_list(
+async def get_permission_list(
     filter: t.Optional[str] = Query(
         default="", alias="filter", description="filter all address"
     ),
     select: t.Optional[str] = Query(
         default="",
         alias="select",
-        description="specific attributes of the types",
+        description="specific attributes of the categories",
     ),
     per_page: int = 10,
     page: int = 1,
@@ -56,23 +56,23 @@ async def get_type_list(
 
 
 @router.get(
-    "/{type_id}",
-    # response_model=schema.IProductTypeOut,
+    "/{media_alt}",
+    # response_model=schema.IProductMediaIn,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_type(type_id: uuid.UUID) -> schema.IProductTypeOut:
-    return await service.get(type_id=type_id)
+async def get_permission(media_alt: uuid.UUID) -> schema.IProductMediaIn:
+    return await service.get(media_alt=media_alt)
 
 
 @router.put(
-    "/{type_id}",
-    response_model=schema.IProductTypeOut,
-    dependencies=[Depends(require_super_admin_or_admin)],
+    "/{media_alt}",
+    response_model=schema.IProductMediaIn,
+    # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def update_type(
-    type_id: uuid.UUID, type: schema.IProductTypeIn
-) -> schema.IProductTypeOut:
-    return await service.update(type_id=type_id, data_in=type)
+async def update_permission(
+    media_alt: uuid.UUID, permission: schema.IProductMediaIn
+) -> schema.IProductMediaIn:
+    return await service.update(media_alt=media_alt, data_in=permission)
 
 
 @router.get(
@@ -80,7 +80,7 @@ async def update_type(
     response_model=ITotalCount,
     dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_total_type() -> t.Optional[ITotalCount]:
+async def get_total_permission() -> t.Optional[ITotalCount]:
     return await service.get_total_count()
 
 
@@ -89,14 +89,14 @@ async def get_total_type() -> t.Optional[ITotalCount]:
     # response_model=int,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_total_type():
+async def get_total_permission():
     return await service.example()
 
 
 @router.delete(
-    "/{type_id}",
+    "/{media_alt}",
     status_code=status.HTTP_204_NO_CONTENT,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def delete_type(type_id: uuid.UUID) -> None:
-    return await service.delete(type_id=type_id)
+async def delete_permission(media_alt: uuid.UUID) -> None:
+    return await service.delete(media_alt=media_alt)
