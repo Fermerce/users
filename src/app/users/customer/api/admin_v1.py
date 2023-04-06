@@ -3,8 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, Query, status
 from src.app.users.customer import schema, service
 from src.app.users.staff import dependency
-from src._base.enum.sort_type import SortOrder
-from src._base.schema.response import IResponseMessage, ITotalCount
+from core.enum.sort_type import SortOrder
+from core.schema.response import IResponseMessage, ITotalCount
 from src.app.users.permission.schema import IPermissionOut
 
 
@@ -24,7 +24,7 @@ async def get_customers_list(
     select: t.Optional[str] = Query(
         default="", alias="select", description="select specific attributes"
     ),
-    per_page: int = 10,
+    page_size: int = 10,
     page: int = 1,
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
@@ -37,7 +37,7 @@ async def get_customers_list(
 ):
     return await service.filter(
         filter=filter,
-        per_page=per_page,
+        page_size=page_size,
         page=page,
         select=select,
         sort_by=sort_by,

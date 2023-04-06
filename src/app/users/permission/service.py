@@ -1,28 +1,27 @@
 import uuid
 import typing as t
 from fastapi import status
-from src._base.enum.sort_type import SortOrder
-from src.lib.db.config import Async_session
-from src.lib.errors import error
-from src._base.schema.response import ITotalCount
-from src.app.users.permission import schema, model
 from fastapi import Response
-from src.app.users.permission.repository import permission_repo
-from sqlalchemy import select
+from core.enum.sort_type import SortOrder
+from core.schema.response import ITotalCount
+from lib.exceptions.duplicate_error import DuplicateError
+from lib.exceptions.not_found_error import NotFoundError
+from lib.exceptions.server_error import ServerError
+from src.app.users.permission import schema, model
+
+from src.app.users.permission.query import permission_query
 
 
 # create permission
 async def create(
     data_in: schema.IPermissionIn,
 ) -> model.Permission:
-    check_perm = await permission_repo.get_by_attr(
-        attr={"name": data_in.name}, first=True
-    )
+    check_perm = await permission_query.get_by_attr(first=True, name=data_in.name)
     if check_perm:
-        raise error.DuplicateError("Permission already exists")
-    new_perm = await permission_repo.create(obj=data_in)
+        raise DuplicateError("Permission already exists")
+    new_perm = await permission_query.create_obj(data_in=data_in)
     if not new_perm:
-        raise error.ServerError("Internal server error")
+        raise ServerError("Internal server error")
     return new_perm
 
 
@@ -30,34 +29,70 @@ async def create(
 async def get(
     permission_id: uuid.UUID,
 ) -> model.Permission:
-    perm = await permission_repo.get(id=permission_id)
+    perm = await permission_query.get_by_attr(id=permission_id)
     if not perm:
-        raise error.NotFoundError("Permission not found")
+        raise NotFoundError("Permission not found")
     return perm
 
 
 # get all permissions
 async def filter(
     filter: str,
-    per_page: int = 10,
+    page_size: int = 10,
     page: int = 0,
     select: str = "",
     sort_by: SortOrder = SortOrder.asc,
     order_by: str = None,
 ) -> t.List[model.Permission]:
-    get_perms = await permission_repo.filter(
-        filter_string=filter,
-        per_page=per_page,
-        page=page,
-        select_columns=select,
-        order_by=order_by,
-        sort_by=sort_by,
-    )
-    return get_perms
+    query = model.Permission.objects
+
+    if filter:
+        query = query.filter(name__icontains=filter)
+    if order_by:
+        if sort_by == SortOrder.asc:
+            query = query.order_by(f"-{order_by}")
+        query = query.order_by(f"{order_by}")
+
+    objects = await query.all()
+    # Count total number of objects
+    total_count = len(objects)
+
+    # Calculate offset and limit for pagination
+    offset = (page - 1) * page_size
+    limit = page_size
+
+    # Apply offset and limit
+    query = query.offset(offset).limit(limit)
+
+    if select:
+        objects = await query.values([val.strip() for val in select.split(",")])
+
+    # Execute the query and retrieve the objects
+
+    # Check if there are more pages
+    has_next = (offset + limit) < total_count
+    has_previous = offset > 0
+    # Raise an exception if the requested page does not exist
+    if page > 1 and not objects:
+        raise NotFoundError("Page not found")
+
+    return {
+        "items": objects,
+        "total": total_count,
+        "page": page,
+        "page_size": page_size,
+        "has_next": has_next,
+        "has_previous": has_previous,
+        "next_page": page + 1 if has_next else None,
+        "previous_page": page - 1 if has_previous else None,
+    }
+
+    # print(get_perms)
+    # return get_perms
 
 
 async def get_total_count() -> int:
-    total = await permission_repo.get_count()
+    total = await permission_query.get_count()
     return ITotalCount(count=total).dict()
 
 
@@ -66,36 +101,26 @@ async def update(
     permission_id: uuid.UUID,
     data_in: schema.IPermissionIn,
 ) -> model.Permission:
-    check_per = await permission_repo.get(id=permission_id)
+    check_per = await permission_query.get_by_attr(id=permission_id)
     if not check_per:
-        raise error.NotFoundError("Permission does not exist")
-    check_per = await permission_repo.get_by_attr(
-        attr=dict(name=data_in.name), first=True
-    )
+        raise NotFoundError("Permission does not exist")
+    if check_per.name == data_in.name:
+        raise DuplicateError(f"Permission with name `{data_in.name}` already exists")
+    check_per = await permission_query.get_by_attr(name=data_in.name)
     if check_per and check_per.id != permission_id:
-        raise error.DuplicateError("Permission already exists")
-    if await permission_repo.get_by_attr(attr={"name": data_in.name}):
-        raise error.DuplicateError(
-            f"Permission with name `{data_in.name}` already exists"
-        )
-    return await permission_repo.update(str(permission_id), data_in.dict())
+        raise DuplicateError("Permission already exists")
+    if await permission_query.get_by_attr(name=data_in.name):
+        raise DuplicateError(f"Permission with name `{data_in.name}` already exists")
+    return await permission_query.update_obj(str(permission_id), data_in.dict())
 
 
 # delete permission
 async def delete(
     permission_id: uuid.UUID,
 ) -> None:
-    check_per = await permission_repo.get(id=permission_id)
+    model.Permission.objects.delete()
+    check_per = await permission_query.get_by_attr(id=permission_id)
     if not check_per:
-        raise error.NotFoundError("Permission does not exist")
-    to_dele = await permission_repo.delete(permission_id)
-    print(to_dele)
-    if to_dele:
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-async def example():
-    async with Async_session() as session:
-        stm = select(model.Permission)
-        result = await session.execute(stm)
-        return result.scalars().all()
+        raise NotFoundError("Permission does not exist")
+    await permission_query.delete_obj(permission_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

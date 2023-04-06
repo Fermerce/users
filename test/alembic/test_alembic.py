@@ -1,6 +1,6 @@
 from sqlalchemy import text
 import pytest
-from src.lib.db.config import engine
+from lib.db.config import engine
 
 
 @pytest.mark.asyncio

@@ -1,10 +1,11 @@
 import typing as t
 from fastapi import APIRouter, Depends, Request, status
-from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
+from lib.exceptions.unauthorize_error import UnauthorizedError
+from src.app.users.auth.schema import ICheckUserEmail, IRefreshToken, IToken
 from src.app.users.customer import dependency, schema, service
-from src._base.schema.response import IResponseMessage
+from core.schema.response import IResponseMessage
 from src.app.users.customer.model import Customer
-from src.lib.errors import error
+
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
 
@@ -26,7 +27,7 @@ async def get_customer_current_data(
     load_related: bool = False,
 ) -> t.Union[schema.ICustomerOutFull, schema.ICustomerOut]:
     if not customer.get("user_id", None):
-        raise error.UnauthorizedError()
+        raise UnauthorizedError()
     return await service.get_customer(
         customer.get("user_id", None), load_related=load_related
     )

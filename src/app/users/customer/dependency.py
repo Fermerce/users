@@ -1,9 +1,9 @@
 from fastapi import Depends
-from src.lib.shared.dependency import AppAuth, AppWrite
+from lib.shared.dependency import AppAuth, AppWrite
 from src.app.users.customer.model import Customer
-from src.app.users.customer.repository import customer_repo
+from src.app.users.customer.query import customer_query
 
-__customer_write = AppWrite(model=Customer, model_repo=customer_repo)
+__customer_write = AppWrite(model=Customer, model_query=customer_query)
 
 
 async def require_customer(get_user: dict = Depends(AppAuth.authenticate)):

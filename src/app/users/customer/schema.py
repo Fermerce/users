@@ -33,7 +33,7 @@ class ICustomerIn(IBaseCustomer):
     class Config:
         schema_extra = {
             "example": {
-                "username": {"required": False, "example": "jonD"},
+                "username": "jon",
                 "email": "john@doe.com",
                 "password": "****************",
             }

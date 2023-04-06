@@ -2,7 +2,7 @@ import typing as t
 import uuid
 from fastapi import APIRouter, Depends, Query, status
 from src.app.users.permission import schema, service
-from src._base.enum.sort_type import SortOrder
+from core.enum.sort_type import SortOrder
 from src.app.users.staff.dependency import require_super_admin_or_admin
 
 
@@ -35,7 +35,7 @@ async def get_permission_list(
         alias="select",
         description="specific attributes of the permissions",
     ),
-    per_page: int = 10,
+    page_size: int = 10,
     page: int = 1,
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
@@ -46,7 +46,7 @@ async def get_permission_list(
 ):
     return await service.filter(
         filter=filter,
-        per_page=per_page,
+        page_size=page_size,
         page=page,
         select=select,
         order_by=order_by,
@@ -66,7 +66,7 @@ async def get_permission(permission_id: uuid.UUID) -> schema.IPermissionOut:
 @router.put(
     "/{permission_id}",
     response_model=schema.IPermissionOut,
-    dependencies=[Depends(require_super_admin_or_admin)],
+    # dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def update_permission(
     permission_id: uuid.UUID, permission: schema.IPermissionIn
@@ -77,19 +77,10 @@ async def update_permission(
 @router.get(
     "/total/count",
     response_model=int,
-    dependencies=[Depends(require_super_admin_or_admin)],
+    # dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def get_total_permission() -> t.Optional[int]:
     return await service.get_total_count()
-
-
-@router.get(
-    "/example/testing",
-    # response_model=int,
-    # dependencies=[Depends(require_super_admin_or_admin)],
-)
-async def get_total_permission():
-    return await service.example()
 
 
 @router.delete(
