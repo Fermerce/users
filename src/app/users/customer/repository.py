@@ -1,7 +1,7 @@
 import typing as t
-from src._base.repository.base import BaseRepository
+from core.repository.base import BaseRepository
 from src.app.users.permission.model import Permission
-from src.lib.errors import error
+from lib.errors import error
 from src.app.users.customer import model, schema
 
 

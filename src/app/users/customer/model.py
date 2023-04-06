@@ -1,7 +1,7 @@
-from src.lib.db.primary_key import Base, sa
+from lib.db.primary_key import Base, sa
 from sqlalchemy.orm import relationship
-from src.lib.utils.password_hasher import Hasher
-from src.lib.utils.random_string import random_str
+from lib.utils.password_hasher import Hasher
+from lib.utils.random_string import random_str
 
 
 customer_permission_association_table = sa.Table(

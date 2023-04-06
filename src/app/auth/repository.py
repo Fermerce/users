@@ -1,5 +1,5 @@
 from fastapi import Request
-from src._base.repository.base import BaseRepository
+from core.repository.base import BaseRepository
 from src.app.auth import model
 
 

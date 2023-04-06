@@ -1,9 +1,9 @@
 import typing as t
 from fastapi import APIRouter, Depends, Request, status
-from src._base.schema.response import IResponseMessage
+from core.schema.response import IResponseMessage
 from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
 from src.app.users.staff import schema, service, dependency, model
-from src.lib.errors import error
+from lib.errors import error
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/staff", tags=["Staff"])

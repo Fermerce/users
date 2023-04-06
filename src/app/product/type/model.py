@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from src.lib.db.primary_key import Base, sa
+from lib.db.primary_key import Base, sa
 
 
 class ProductType(Base):

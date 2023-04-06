@@ -1,4 +1,4 @@
-from src.lib.db.primary_key import Base, sa
+from lib.db.primary_key import Base, sa
 
 
 class AuthToken(Base):

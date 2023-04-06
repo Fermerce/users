@@ -1,11 +1,11 @@
 import typing as t
 from fastapi import Request
-from src._taskiq.auth.tasks import create_token
-from src._base.schema.response import IResponseMessage
-from src.lib.errors import error
+from src.taskiq.auth.tasks import create_token
+from core.schema.response import IResponseMessage
+from lib.errors import error
 from src.app.auth import schema
 from src.app.auth.repository import auth_token_repo
-from src.lib.utils.security import JWTAUTH
+from lib.utils.security import JWTAUTH
 
 
 async def auth_login(
@@ -15,7 +15,9 @@ async def auth_login(
     if not user_id:
         raise ValueError("Invalid data for login request")
     get_jwt_data_for_encode = schema.IToEncode(user_id=str(user_id))
-    access_token, refresh_token = JWTAUTH.jwt_encoder(data=get_jwt_data_for_encode.dict())
+    access_token, refresh_token = JWTAUTH.jwt_encoder(
+        data=get_jwt_data_for_encode.dict()
+    )
     if access_token and refresh_token:
         user_ip = auth_token_repo.get_user_ip(request)
         check_token = await auth_token_repo.get_by_attr(
@@ -54,7 +56,9 @@ async def auth_login_token_refresh(
     if check_auth_token.ip_address != user_ip:
         raise error.UnauthorizedError()
     get_jwt_data_for_encode = schema.IToEncode(user_id=str(check_auth_token.user_id))
-    access_token, refresh_token = JWTAUTH.jwt_encoder(data=get_jwt_data_for_encode.dict())
+    access_token, refresh_token = JWTAUTH.jwt_encoder(
+        data=get_jwt_data_for_encode.dict()
+    )
     if access_token and refresh_token:
         await create_token.kiq(
             user_id=str(check_auth_token.user_id),

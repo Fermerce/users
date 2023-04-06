@@ -1,6 +1,6 @@
 import httpx
 import pytest
-from src._base.settings import config
+from core.settings import config
 
 
 # @pytest.mark.asyncio

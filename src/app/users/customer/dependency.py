@@ -1,5 +1,5 @@
 from fastapi import Depends
-from src.lib.shared.dependency import AppAuth, AppWrite
+from lib.shared.dependency import AppAuth, AppWrite
 from src.app.users.customer.model import Customer
 from src.app.users.customer.repository import customer_repo
 

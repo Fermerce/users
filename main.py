@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src._base.settings import config
-from src._taskiq.broker import broker
-from src.lib.middleware.exclude_data_from_response import (
+from core.settings import config
+from src.taskiq.broker import broker
+from lib.middleware.exclude_data_from_response import (
     exclude_keys_middleware,
 )
-from src.lib.middleware.response_formatter import response_data_transformer
-from src._base.router import v1, admin_v1
-from src._base.schema.response import IHealthCheck
+from lib.middleware.response_formatter import response_data_transformer
+from core.router import v1, admin_v1
+from core.schema.response import IHealthCheck
 
 
 def get_application():

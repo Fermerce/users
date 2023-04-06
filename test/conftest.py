@@ -2,12 +2,12 @@ import typing as t
 import pytest
 import pytest_asyncio
 import httpx
-from src.lib.db.config import async_session
+from lib.db.config import async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from alembic.config import Config
 from alembic import command
 import main
-from src.lib.db.config import engine
+from lib.db.config import engine
 import os
 from faker import Faker
 

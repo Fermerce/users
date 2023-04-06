@@ -2,7 +2,7 @@ import typing as t
 import uuid
 from fastapi import APIRouter, Depends, Query, status
 from src.app.users.permission import schema, service
-from src._base.enum.sort_type import SortOrder
+from core.enum.sort_type import SortOrder
 from src.app.users.staff.dependency import require_super_admin_or_admin
 
 

@@ -2,18 +2,18 @@ import typing as t
 import uuid
 from fastapi import Request, status
 from fastapi import Response
-from src._base.enum.sort_type import SearchType, SortOrder
-from src._base.schema.response import ITotalCount, IResponseMessage
+from core.enum.sort_type import SearchType, SortOrder
+from core.schema.response import ITotalCount, IResponseMessage
 from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from src.app.auth import service as auth_service
 from src.app.users.permission.model import Permission
-from src.lib.errors import error
+from lib.errors import error
 from src.app.users.customer import schema, model
 from src.app.users.customer.repository import customer_repo
 from src.app.users.permission.repository import permission_repo
-from src._taskiq.user import tasks
-from src.lib.utils import security
+from src.taskiq.user import tasks
+from lib.utils import security
 
 
 async def create(data_in=schema.ICustomerIn):

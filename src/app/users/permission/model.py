@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from src.lib.db.primary_key import Base, sa
+from lib.db.primary_key import Base, sa
 from src.app.users.staff.model import staff_role_association_table
 from src.app.users.customer.model import customer_permission_association_table
 

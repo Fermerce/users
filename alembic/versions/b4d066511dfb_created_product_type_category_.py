@@ -21,7 +21,7 @@ def upgrade() -> None:
     op.create_table(
         "product_category",
         sa.Column("name", sa.String(length=24), nullable=True),
-        sa.Column("id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("id", lib.db.primary_key.GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -29,7 +29,7 @@ def upgrade() -> None:
     op.create_table(
         "product_measuring_unit",
         sa.Column("unit", sa.String(length=24), nullable=True),
-        sa.Column("id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("id", lib.db.primary_key.GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -37,7 +37,7 @@ def upgrade() -> None:
     op.create_table(
         "product_promo_code",
         sa.Column("code", sa.String(length=10), nullable=True),
-        sa.Column("id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("id", lib.db.primary_key.GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -45,7 +45,7 @@ def upgrade() -> None:
     op.create_table(
         "product_type",
         sa.Column("name", sa.String(length=24), nullable=True),
-        sa.Column("id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("id", lib.db.primary_key.GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),

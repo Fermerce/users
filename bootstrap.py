@@ -1,4 +1,4 @@
-from src._base.settings import config
+from core.settings import config
 import uvicorn
 
 

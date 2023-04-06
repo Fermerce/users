@@ -1,10 +1,10 @@
 import uuid
 import typing as t
 from fastapi import status
-from src._base.enum.sort_type import SortOrder
-from src.lib.db.config import Async_session
-from src.lib.errors import error
-from src._base.schema.response import ITotalCount
+from core.enum.sort_type import SortOrder
+from lib.db.config import Async_session
+from lib.errors import error
+from core.schema.response import ITotalCount
 from src.app.users.permission import schema, model
 from fastapi import Response
 from src.app.users.permission.repository import permission_repo

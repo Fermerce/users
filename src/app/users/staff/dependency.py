@@ -1,5 +1,5 @@
 from fastapi import Depends
-from src.lib.shared.dependency import AppAuth, AppWrite
+from lib.shared.dependency import AppAuth, AppWrite
 from src.app.users.staff.model import Staff
 from src.app.users.staff.repository import staff_repo
 

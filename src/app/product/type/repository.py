@@ -1,4 +1,4 @@
-from src._base.repository.base import BaseRepository
+from core.repository.base import BaseRepository
 from src.app.product.type import model
 
 

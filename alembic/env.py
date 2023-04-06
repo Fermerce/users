@@ -7,9 +7,9 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 
 from alembic import context
-from src.lib.db.config import metadata
-from src._base.model.models import model_for_alembic  # noqa
-from src._base.settings import config as base_config
+from lib.db.config import metadata
+from core.model.models import model_for_alembic  # noqa
+from core.settings import config as base_config
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

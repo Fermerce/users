@@ -1,9 +1,9 @@
 import typing as t
 import uuid
 from fastapi import APIRouter, Depends, Query, status
-from src._base.schema.response import ITotalCount
+from core.schema.response import ITotalCount
 from src.app.product.promo_code import schema, service
-from src._base.enum.sort_type import SortOrder
+from core.enum.sort_type import SortOrder
 from src.app.users.staff.dependency import require_super_admin_or_admin
 
 

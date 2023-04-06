@@ -24,7 +24,7 @@ def upgrade() -> None:
         sa.Column("access_token", sa.String(), nullable=True),
         sa.Column("user_id", sa.String(), nullable=True),
         sa.Column("ip_address", sa.String(length=24), nullable=True),
-        sa.Column("id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("id", lib.db.primary_key.GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -39,7 +39,7 @@ def upgrade() -> None:
         sa.Column("is_verified", sa.Boolean(), nullable=True),
         sa.Column("is_suspended", sa.Boolean(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=True),
-        sa.Column("id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("id", lib.db.primary_key.GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -48,7 +48,7 @@ def upgrade() -> None:
     op.create_table(
         "permission",
         sa.Column("name", sa.String(length=24), nullable=True),
-        sa.Column("id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("id", lib.db.primary_key.GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -65,7 +65,7 @@ def upgrade() -> None:
         sa.Column("is_active", sa.Boolean(), nullable=True),
         sa.Column("password_reset_token", sa.String(), nullable=True),
         sa.Column("tel", sa.String(length=17), nullable=True),
-        sa.Column("id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("id", lib.db.primary_key.GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -73,8 +73,8 @@ def upgrade() -> None:
     )
     op.create_table(
         "customer_role_association",
-        sa.Column("customer_id", src.lib.db.primary_key.GUID(), nullable=False),
-        sa.Column("permission_id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("customer_id", lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("permission_id", lib.db.primary_key.GUID(), nullable=False),
         sa.ForeignKeyConstraint(
             ["customer_id"],
             ["customer.id"],
@@ -87,8 +87,8 @@ def upgrade() -> None:
     )
     op.create_table(
         "staff_role_association",
-        sa.Column("staff_id", src.lib.db.primary_key.GUID(), nullable=False),
-        sa.Column("permission_id", src.lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("staff_id", lib.db.primary_key.GUID(), nullable=False),
+        sa.Column("permission_id", lib.db.primary_key.GUID(), nullable=False),
         sa.ForeignKeyConstraint(
             ["permission_id"],
             ["permission.id"],
