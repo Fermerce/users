@@ -1,13 +1,6 @@
-import os
 from sqlalchemy import text
-
-# from alembic.config import Config
-# from alembic import command
 import pytest
-from src.lib.db.config import engine
-
-
-# from src.lib.base import settings
+from lib.db.config import engine
 
 
 @pytest.mark.asyncio

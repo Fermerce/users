@@ -1,16 +1,22 @@
 import asyncio
 from logging.config import fileConfig
-
+import os
+import sys
+from pathlib import Path
 from sqlalchemy import engine_from_config
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 
 from alembic import context
-from src.lib.db.config import metadata
-from src._base.model.models import model_for_alembic  # noqa
-from src._base.settings import config as base_config
+from lib.db.config import metadata
 
+from core.model.models import *  # noqa
+from core.settings import config as base_config
+
+# print(os.getcwdb())
+# myPath = os.path.dirname(os.getcwdb())
+# sys.path.insert(0, myPath + "/../../")
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
