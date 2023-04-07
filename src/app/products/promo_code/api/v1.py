@@ -29,14 +29,14 @@ async def create_promo_code(
 )
 async def get_promo_code_list(
     filter: t.Optional[str] = Query(
-        default="", alias="filter", description="filter all address"
+        default="", alias="filter", description="filter all shipping_address"
     ),
     select: t.Optional[str] = Query(
         default="",
         alias="select",
         description="specific attributes of the promo_codes",
     ),
-    page_size: int = 10,
+    per_page: int = 10,
     page: int = 1,
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
@@ -47,7 +47,7 @@ async def get_promo_code_list(
 ):
     return await service.filter(
         filter=filter,
-        page_size=page_size,
+        per_page=per_page,
         page=page,
         select=select,
         order_by=order_by,
@@ -67,7 +67,7 @@ async def get_promo_code(promo_code_id: uuid.UUID) -> schema.IProductPromoCodeOu
 @router.put(
     "/{promo_code_id}",
     response_model=schema.IProductPromoCodeOut,
-    dependencies=[Depends(require_super_admin_or_admin)],
+    # dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def update_promo_code(
     promo_code_id: uuid.UUID, data_in: schema.IProductPromoCodeIn
@@ -78,19 +78,10 @@ async def update_promo_code(
 @router.get(
     "/total/count",
     response_model=ITotalCount,
-    dependencies=[Depends(require_super_admin_or_admin)],
+    # dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def get_total_promo_code() -> t.Optional[ITotalCount]:
     return await service.get_total_count()
-
-
-@router.get(
-    "/example/testing",
-    # response_model=int,
-    # dependencies=[Depends(require_super_admin_or_admin)],
-)
-async def get_total_promo_code():
-    return await service.example()
 
 
 @router.delete(

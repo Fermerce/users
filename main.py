@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.settings import config
-from lib.db.config import connect_database, disconnect_database
 from src.taskiq.broker import broker
 from lib.middleware.exclude_data_from_response import (
     exclude_keys_middleware,
@@ -32,9 +31,8 @@ def get_application():
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    _app.middleware("http")(exclude_keys_middleware(["password"]))
-    _app.middleware("http")(response_data_transformer)
+    # _app.middleware("http")(exclude_keys_middleware(["password"]))
+    # _app.middleware("http")(response_data_transformer)
 
     return _app
 
@@ -44,7 +42,6 @@ app = get_application()
 
 @app.on_event("startup")
 async def start_broker():
-    await connect_database(app)
     if not broker.is_worker_process:
         print("Starting broker")
         await broker.startup()
@@ -52,7 +49,6 @@ async def start_broker():
 
 @app.on_event("shutdown")
 async def app_shutdown():
-    await disconnect_database(app)
     if not broker.is_worker_process:
         print("Shutting down broker")
         await broker.shutdown()

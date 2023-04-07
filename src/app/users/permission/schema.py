@@ -8,7 +8,7 @@ class IPermissionIn(pyd.BaseModel):
     name: pyd.constr(max_length=30, min_length=4, strip_whitespace=True)
 
     class Config:
-        schema_extra = {"example": {"name": "admin"}}
+        schema_extra = {"example": {"name": "Tubber"}}
 
 
 class IPermissionOut(pyd.BaseModel):
@@ -22,7 +22,7 @@ class IPermissionOut(pyd.BaseModel):
         schema_extra = {
             "example": {
                 "id": "12345678-1234-1234-1234-123456789abc",
-                "name": "admin",
+                "name": "Tubber",
                 "created_at": "2022-10-25",
                 "updated_at": "2022-10-25",
             }

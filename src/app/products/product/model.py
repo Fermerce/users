@@ -1,53 +1,30 @@
-import typing as t
-import ormar
-from lib.db import model
-from lib.utils.random_string import generate_stampId
-from src.app.products.measuring_unit.model import ProductMeasuringUnit
-from src.app.products.category.model import ProductCategory
-from src.app.products.medias.model import ProductMedia
-from src.app.products.promo_code.model import ProductPromoCode
+import uuid
+from sqlalchemy.orm import relationship
+from lib.db.primary_key import Base, sa
 
 
-class ProductDetail(model.BaseModel):
-    class Meta(model.BaseMeta):
-        tablename = "product_detail"
-
-    title: str = ormar.String(max_length=50)
-    detail: str = ormar.String(max_length=5000)
-
-
-class Product(model.BaseModel):
-    class Meta(model.BaseMeta):
-        tablename = "product"
-
-    name: str = ormar.String(max_length=50)
-    slug: str = ormar.String(max_length=300)
-    stock_unit: int = ormar.Integer(default=1)
-    original_price: t.Optional[float] = ormar.Float(nullable=True)
-    sale_price: float = ormar.Float()
-    discount: float = ormar.Float(default=0.0)
-    sku: str = ormar.String(max_length=16, default=generate_stampId(12))
-    description: str = ormar.String(max_length=5000)
-    is_series: bool = ormar.Boolean(default=False)
-    in_stock: bool = ormar.Boolean(default=False)
-    is_suspended: bool = ormar.Boolean(default=False)
-
-    details: t.List[ProductDetail] = ormar.ForeignKey(
-        ProductDetail, related_name="products"
+class Product(Base):
+    __tablename__ = "product"
+    name = sa.Column(sa.String(50), nullable=False)
+    slug = sa.Column(sa.String(70), nullable=False)
+    description = sa.Column(sa.Text, nullable=False)
+    price = sa.Column(sa.Numeric(precision=10, decimal_return_scale=2), nullable=False)
+    in_stock = sa.Column(sa.Boolean, default=False)
+    is_active = sa.Column(sa.Boolean, default=False)
+    is_suspended = sa.Column(sa.Boolean, default=False)
+    sku = sa.Column(
+        sa.String(25),
+        default=lambda: f"PR-{str(uuid.uuid4()).split('-')[-1].upper()}",
+        unique=True,
     )
-
-    sales_mode: t.List[ProductMeasuringUnit] = ormar.ManyToMany(
-        ProductMeasuringUnit, related_name="products", name="product_mu"
-    )
-
-    promo_codes: t.List[ProductPromoCode] = ormar.ManyToMany(
-        ProductPromoCode, related_name="products", name="product_code"
-    )
-
-    categories: t.List[ProductCategory] = ormar.ManyToMany(
-        ProductCategory, related_name="products", name="product_category"
-    )
-
-    medias: t.List[ProductMedia] = ormar.ForeignKey(
-        ProductMedia, related_name="product"
-    )
+    # medias = Set("ProductMedia")
+    # product_categorys = Set("ProductCategory")
+    # product_detail = Required("ProductDetail")
+    # product_promo_code = Optional("ProductPromoCode")
+    # carts = Set("Cart")
+    # product_types = Set("Country")
+    # order_items = Set("OrderItem")
+    # sales_mode = Set("ProductMeasurement")
+    # reviews = Set("ProductReview")
+    # store = Optional("VendorStore")
+    # vendor = Required("Vendor")

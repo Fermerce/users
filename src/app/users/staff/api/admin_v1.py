@@ -14,7 +14,7 @@ router = APIRouter(prefix="/staff", tags=["Staff"])
     "/",
     status_code=status.HTTP_201_CREATED,
     response_model=IResponseMessage,
-    dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def create_staff(data_in: schema.IStaffIn) -> IResponseMessage:
     return await service.create(data_in=data_in)
@@ -22,7 +22,7 @@ async def create_staff(data_in: schema.IStaffIn) -> IResponseMessage:
 
 @router.get(
     "/",
-    dependencies=[Depends(dependency.require_super_admin_or_admin)],
+    # dependencies=[Depends(dependency.require_super_admin_or_admin)],
 )
 async def get_staff_list(
     filter: t.Optional[str] = Query(
@@ -31,7 +31,7 @@ async def get_staff_list(
     select: t.Optional[str] = Query(
         default="", alias="select", description="select specific attributes"
     ),
-    page_size: int = 10,
+    per_page: int = 10,
     page: int = 1,
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
@@ -43,7 +43,7 @@ async def get_staff_list(
 ):
     return await service.filter(
         filter=filter,
-        page_size=page_size,
+        per_page=per_page,
         page=page,
         select=select,
         sort_by=sort_by,

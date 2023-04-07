@@ -1,9 +1,6 @@
-import ormar
-from lib.db import model
+from lib.db.primary_key import Base, sa
 
 
-class ProductMeasuringUnit(model.BaseModel):
-    class Meta(model.BaseMeta):
-        tablename = "product_measuring_unit"
-
-    unit = ormar.String(max_length=24)
+class ProductMeasuringUnit(Base):
+    __tablename__ = "product_measuring_unit"
+    unit = sa.Column(sa.String(24))

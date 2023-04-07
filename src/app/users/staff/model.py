@@ -1,28 +1,44 @@
-import typing as t
-import ormar
-from lib.db import model
+from lib.db.primary_key import Base, sa
+from sqlalchemy.orm import relationship
 from lib.utils.password_hasher import Hasher
 from lib.utils.random_string import random_str
-from src.app.users.permission.model import Permission
+from src.app.users.user.abstract import BaseUser
 
 
-class Staff(model.BaseModel):
-    class Meta(model.BaseMeta):
-        tablename = "staff"
+staff_role_association_table = sa.Table(
+    "staff_role_association",
+    Base.metadata,
+    sa.Column(
+        "staff_id",
+        sa.ForeignKey(
+            "staff.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+    sa.Column(
+        "permission_id",
+        sa.ForeignKey(
+            "permission.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+)
 
-    aud: str = ormar.String(max_length=10, default=lambda: f"ST-{random_str(5)}")
-    firstname: str = ormar.String(max_length=20, nullable=True)
-    lastname: str = ormar.String(max_length=20, nullable=True)
-    username: str = ormar.String(max_length=30, default=lambda: f"FM-{random_str(5)}")
-    email: str = ormar.String(max_length=50, unique=True)
-    password: str = ormar.String(max_length=300)
-    password_reset_token: str = ormar.String(max_length=300, nullable=True)
-    is_verified: bool = ormar.Boolean(default=False)
-    is_suspended: bool = ormar.Boolean(default=False)
-    is_active: bool = ormar.Boolean(default=True)
 
-    tel = ormar.String(max_length=17)
-    categories: t.Optional[t.List[Permission]] = ormar.ManyToMany(Permission)
+class Staff(BaseUser):
+    __tablename__ = "staff"
+    aud = sa.Column(sa.String(8), default=lambda: f"ST-{random_str(5)}")
+    password_reset_token = sa.Column(sa.String, default=None)
+    tel = sa.Column(sa.String(17))
+    permissions = relationship(
+        "Permission",
+        secondary=staff_role_association_table,
+        back_populates="staff",
+    )
 
     @staticmethod
     def generate_hash(password: str) -> str:

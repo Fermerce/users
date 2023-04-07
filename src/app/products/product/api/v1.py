@@ -1,52 +1,102 @@
 import typing as t
 import uuid
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
+from core.schema.response import ITotalCount
+from src.app.products.promo_code import schema, service
+from core.enum.sort_type import SortOrder
+from src.app.users.staff.dependency import require_super_admin_or_admin
 
-from src.app.products import service
-from src.base.enum.sort_type import SortOrder
 
-router = APIRouter(prefix="/products", tags=["products"])
+router = APIRouter(prefix="/promocodes", tags=["ProductPromoCodes"])
+
+
+@router.post(
+    "/",
+    # response_model=schema.IProductPromoCodeOut,
+    status_code=status.HTTP_201_CREATED,
+    # dependencies=[Depends(require_super_admin_or_admin)],
+)
+async def create_promo_code(
+    data_in: schema.IProductPromoCodeIn,
+) -> schema.IProductPromoCodeOut:
+    return await service.create(data_in=data_in)
 
 
 @router.get(
     "/",
-    status_code=status.HTTP_200_OK,
-    # response_model=schema.IProductLongInfo,
+    response_model=list[schema.IProductPromoCodeOut],
+    # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_product(product_id: uuid.UUID = None, slug: str = None):
-    return await service.get(product_id=product_id, slug=slug)
-
-
-@router.get(
-    "/search",
-    status_code=status.HTTP_200_OK,
-    # response_model=List[schema.IProductShortInfo],
-)
-async def get_all_products(
-    filter: str = "",
-    select: str = "",
+async def get_promo_code_list(
+    filter: t.Optional[str] = Query(
+        default="", alias="filter", description="filter all shipping_address"
+    ),
+    select: t.Optional[str] = Query(
+        default="",
+        alias="select",
+        description="specific attributes of the promo_codes",
+    ),
+    per_page: int = 10,
     page: int = 1,
-    page_size: int = 10,
-    is_series: bool = False,
-    is_active: bool = True,
-    is_assigned: bool = False,
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
     ),
     order_by: t.Optional[str] = Query(
-        default="id, title", description="order by attribute, e.g. id"
+        default="id", description="order by attribute, e.g. id"
     ),
-    load_related: bool = False,
 ):
     return await service.filter(
-        page_size=page_size,
-        page=page,
         filter=filter,
+        per_page=per_page,
+        page=page,
         select=select,
         order_by=order_by,
         sort_by=sort_by,
-        is_active=is_active,
-        is_series=is_series,
-        is_assigned=is_assigned,
-        load_related=load_related,
     )
+
+
+@router.get(
+    "/{promo_code_id}",
+    # response_model=schema.IProductPromoCodeOut,
+    # dependencies=[Depends(require_super_admin_or_admin)],
+)
+async def get_promo_code(promo_code_id: uuid.UUID) -> schema.IProductPromoCodeOut:
+    return await service.get(promo_code_id=promo_code_id)
+
+
+@router.put(
+    "/{promo_code_id}",
+    response_model=schema.IProductPromoCodeOut,
+    dependencies=[Depends(require_super_admin_or_admin)],
+)
+async def update_promo_code(
+    promo_code_id: uuid.UUID, data_in: schema.IProductPromoCodeIn
+) -> schema.IProductPromoCodeOut:
+    return await service.update(promo_code_id=promo_code_id, data_in=data_in)
+
+
+@router.get(
+    "/total/count",
+    response_model=ITotalCount,
+    dependencies=[Depends(require_super_admin_or_admin)],
+)
+async def get_total_promo_code() -> t.Optional[ITotalCount]:
+    return await service.get_total_count()
+
+
+@router.get(
+    "/example/testing",
+    # response_model=int,
+    # dependencies=[Depends(require_super_admin_or_admin)],
+)
+async def get_total_promo_code():
+    return await service.example()
+
+
+@router.delete(
+    "/{promo_code_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    # dependencies=[Depends(require_super_admin_or_admin)],
+)
+async def delete_promo_code(promo_code_id: uuid.UUID) -> None:
+    return await service.delete(promo_code_id=promo_code_id)

@@ -1,8 +1,14 @@
 import typing as t
+<<<<<<< HEAD:src/app/users/staff/query.py
 from core.query.base_query import BaseQuery
 from lib.exceptions.duplicate_error import DuplicateError
 from lib.exceptions.not_found_error import NotFoundError
 from src.app.users.permission.model import Permission
+=======
+from core.repository.base import BaseRepository
+from src.app.users.permission.model import Permission
+from lib.errors import error
+>>>>>>> test:src/app/users/staff/repository.py
 from src.app.users.staff import model, schema
 
 

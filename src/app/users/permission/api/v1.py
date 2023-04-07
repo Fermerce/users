@@ -11,9 +11,9 @@ router = APIRouter(prefix="/permissions", tags=["Permissions"])
 
 @router.post(
     "/",
-    # response_model=schema.IPermissionOut,
+    response_model=schema.IPermissionOut,
     status_code=status.HTTP_201_CREATED,
-    # dependencies=[Depends(require_super_admin_or_admin)],
+    dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def create_permission(
     data_in: schema.IPermissionIn,
@@ -23,19 +23,19 @@ async def create_permission(
 
 @router.get(
     "/",
-    # response_model=list[schema.IPermissionOut],
-    # dependencies=[Depends(require_super_admin_or_admin)],
+    response_model=list[schema.IPermissionOut],
+    dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def get_permission_list(
     filter: t.Optional[str] = Query(
-        default="", alias="filter", description="filter all address"
+        default="", alias="filter", description="filter all shipping_address"
     ),
     select: t.Optional[str] = Query(
         default="",
         alias="select",
         description="specific attributes of the permissions",
     ),
-    page_size: int = 10,
+    per_page: int = 10,
     page: int = 1,
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
@@ -46,7 +46,7 @@ async def get_permission_list(
 ):
     return await service.filter(
         filter=filter,
-        page_size=page_size,
+        per_page=per_page,
         page=page,
         select=select,
         order_by=order_by,
@@ -56,8 +56,8 @@ async def get_permission_list(
 
 @router.get(
     "/{permission_id}",
-    # response_model=schema.IPermissionOut,
-    # dependencies=[Depends(require_super_admin_or_admin)],
+    response_model=schema.IPermissionOut,
+    dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def get_permission(permission_id: uuid.UUID) -> schema.IPermissionOut:
     return await service.get(permission_id=permission_id)
@@ -66,7 +66,7 @@ async def get_permission(permission_id: uuid.UUID) -> schema.IPermissionOut:
 @router.put(
     "/{permission_id}",
     response_model=schema.IPermissionOut,
-    # dependencies=[Depends(require_super_admin_or_admin)],
+    dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def update_permission(
     permission_id: uuid.UUID, permission: schema.IPermissionIn
@@ -77,7 +77,7 @@ async def update_permission(
 @router.get(
     "/total/count",
     response_model=int,
-    # dependencies=[Depends(require_super_admin_or_admin)],
+    dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def get_total_permission() -> t.Optional[int]:
     return await service.get_total_count()
@@ -86,7 +86,7 @@ async def get_total_permission() -> t.Optional[int]:
 @router.delete(
     "/{permission_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    # dependencies=[Depends(require_super_admin_or_admin)],
+    dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def delete_permission(permission_id: uuid.UUID) -> None:
     return await service.delete(permission_id=permission_id)

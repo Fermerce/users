@@ -1,5 +1,5 @@
 from datetime import timedelta
-from src.app.users.staff.query import staff_query
+from src.app.users.staff.repository import staff_repo
 from src.taskiq.broker import broker
 from lib.shared.mail.mailer import Mailer
 from lib.utils import security
@@ -33,12 +33,15 @@ def send_staff_activation_email(staff: dict):
 @broker.task
 async def send_staff_password_reset_link(staff: dict):
     staff_id = staff.get("id")
-    get_staff = await staff_query.get_by_attr(id=staff_id)
+    get_staff = await staff_repo.get(id=staff_id)
     if get_staff:
         token = security.JWTAUTH.data_encoder(
             data={"staff_id": staff_id}, duration=timedelta(days=1)
         )
-        await staff_query.update(staff=get_staff, obj=dict(password_reset_token=token))
+        result = await staff_repo.update(
+            staff=get_staff, obj=dict(password_reset_token=token)
+        )
+        print(result.password_reset_token)
         url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=staff"
 
         mail_template_context = {
@@ -60,12 +63,12 @@ async def send_staff_password_reset_link(staff: dict):
 @broker.task
 async def send_verify_staff_password_reset(staff: dict):
     staff_id = staff.get("id")
-    get_staff = await staff_query.get_by_attr(id=staff_id)
+    get_staff = await staff_repo.get(id=staff_id)
     if get_staff:
         token = security.JWTAUTH.data_encoder(
             data={"staff_id": staff_id}, duration=timedelta(days=1)
         )
-        await staff_query.update(staff=get_staff, obj=dict(password_reset_token=token))
+        await staff_repo.update(staff=get_staff, obj=dict(password_reset_token=token))
         url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type=staff"
 
         mail_template_context = {

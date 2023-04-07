@@ -1,9 +1,9 @@
 import typing as t
 from fastapi import APIRouter, Depends, Request, status
 from core.schema.response import IResponseMessage
-from lib.exceptions.unauthorize_error import UnauthorizedError
-from src.app.users.auth.schema import ICheckUserEmail, IRefreshToken, IToken
+from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
 from src.app.users.staff import schema, service, dependency, model
+from lib.errors import error
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/staff", tags=["Staff"])
@@ -19,7 +19,7 @@ async def get_staff_current_data(
     load_related: bool = False,
 ) -> t.Union[schema.IStaffOutFull, schema.IStaffOut]:
     if not staff_data.get("user_id", None):
-        raise UnauthorizedError()
+        raise error.UnauthorizedError()
     return await service.get_staff(
         staff_id=staff_data.get("user_id", None), load_related=load_related
     )
