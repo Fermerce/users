@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from src.app.customer.model import Customer
+from src.app.user.model import User
 
 
 async def test_create_model():
@@ -19,12 +19,10 @@ async def test_create_model():
     ]
     register_relationships = [("permissions", "permission")]
     current_relationships = [
-        (rel.key, rel.target.name) for rel in sa.inspect(Customer).relationships
+        (rel.key, rel.target.name) for rel in sa.inspect(User).relationships
     ]
-    current_columns = [
-        (column.name, str(column.type)) for column in sa.inspect(Customer).c
-    ]
-    assert Customer.__tablename__ == "customer"
+    current_columns = [(column.name, str(column.type)) for column in sa.inspect(User).c]
+    assert User.__tablename__ == "user"
 
     for rel1, rel2 in zip(current_relationships, register_relationships):
         assert rel1[0] == rel2[0]

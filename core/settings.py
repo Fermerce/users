@@ -17,7 +17,7 @@ class Settings(pyd.BaseSettings):
     environment: str = os.getenv("ENVIRONMENT")
     backend_cors_origins: List[str] = os.getenv("BACKEND_CORS_ORIGINS")
     app_task_type: str = os.getenv("app_task_type", "direct")
-    app_name: str = os.getenv("APP_NAME", "customer")
+    app_name: str = os.getenv("APP_NAME", "user")
 
     # admin email settings
 

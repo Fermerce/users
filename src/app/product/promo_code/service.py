@@ -21,6 +21,7 @@ async def create(
     if check_perm:
         raise error.DuplicateError("product promo code already exists")
     new_perm = await product_promo_code_repo.create(obj=data_in)
+
     if not new_perm:
         raise error.ServerError("Internal server error")
     return new_perm

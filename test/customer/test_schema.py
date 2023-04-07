@@ -2,7 +2,7 @@
 # from faker import Faker
 # from pydantic import ValidationError
 # import pytest
-# from src.app.customer import schema
+# from src.app. user import schema
 
 
 # # def test_ICustomerIn(faker: Faker):
@@ -103,16 +103,16 @@
 
 
 # def test_ICustomerRoleUpdate():
-#     data = dict(customer_id=str(uuid.uuid4()), permissions=[str(uuid.uuid4())])
+#     data = dict(users_id=str(uuid.uuid4()), permissions=[str(uuid.uuid4())])
 #     data_in = schema.ICustomerRoleUpdate(
-#         customer_id=str(uuid.uuid4()), permissions=[str(uuid.uuid4())]
+#         users_id=str(uuid.uuid4()), permissions=[str(uuid.uuid4())]
 #     )
 #     assert data_in.construct()
 #     assert data_in.dict().keys() == data.keys()
 
 
 # def test_ICustomerRemove():
-#     data = dict(customer_id=str(uuid.uuid4()), permanent=True)
-#     data_in = schema.ICustomerRemove(customer_id=str(uuid.uuid4()), permanent=True)
+#     data = dict(users_id=str(uuid.uuid4()), permanent=True)
+#     data_in = schema.ICustomerRemove(users_id=str(uuid.uuid4()), permanent=True)
 #     assert data_in.construct()
 #     assert data_in.dict().keys() == data.keys()

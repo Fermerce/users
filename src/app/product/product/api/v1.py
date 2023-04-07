@@ -29,7 +29,7 @@ async def create_promo_code(
 )
 async def get_promo_code_list(
     filter: t.Optional[str] = Query(
-        default="", alias="filter", description="filter all address"
+        default="", alias="filter", description="filter all shipping_address"
     ),
     select: t.Optional[str] = Query(
         default="",

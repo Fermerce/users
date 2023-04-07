@@ -4,7 +4,7 @@ from fastapi import Request, status
 from fastapi import Response
 from core.enum.sort_type import SortOrder
 from core.schema.response import ITotalCount, IResponseMessage
-from src.taskiq.user.tasks import send_customer_activation_email
+from src.taskiq.user.tasks import send_users_activation_email
 from src.app.users.permission.model import Permission
 from lib.errors import error
 from src.app.users.staff import schema, model
@@ -152,7 +152,7 @@ async def get_staff(
 ) -> t.Union[schema.IStaffOutFull, schema.IStaffOut]:
     if not staff_id:
         raise error.NotFoundError(
-            "staff  with customer does not exist",
+            "staff  with  user does not exist",
         )
     staffs = await staff_repo.get(staff_id, load_related=load_related)
     if staffs:
@@ -235,7 +235,7 @@ async def login(
     if not check_staff.check_password(data_in.password):
         raise error.UnauthorizedError(detail="incorrect email or password")
     if not check_staff.is_verified:
-        await send_customer_activation_email.kiq(
+        await send_users_activation_email.kiq(
             dict(email=data_in.username, id=str(check_staff.id))
         )
         return IResponseMessage(

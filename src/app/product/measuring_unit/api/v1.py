@@ -7,7 +7,7 @@ from core.enum.sort_type import SortOrder
 from src.app.users.staff.dependency import require_super_admin_or_admin
 
 
-router = APIRouter(prefix="/measurements", tags=["Product measuring unit_id"])
+router = APIRouter(prefix="/measurements", tags=["Product measuring unit"])
 
 
 @router.post(
@@ -18,18 +18,18 @@ router = APIRouter(prefix="/measurements", tags=["Product measuring unit_id"])
 )
 async def create_measurement(
     data_in: schema.IProductMeasuringUnitIn,
-) -> schema.IProductMeasuringUnitIn:
+) -> schema.IProductMeasuringUnitOut:
     return await service.create(data_in=data_in)
 
 
 @router.get(
     "/",
-    response_model=list[schema.IProductMeasuringUnitIn],
+    response_model=list[schema.IProductMeasuringUnitOut],
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def get_measurement_list(
     filter: t.Optional[str] = Query(
-        default="", alias="filter", description="filter all address"
+        default="", alias="filter", description="filter all shipping_address"
     ),
     select: t.Optional[str] = Query(
         default="",
@@ -60,18 +60,18 @@ async def get_measurement_list(
     # response_model=schema.IProductMeasuringUnitIn,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_measurement(unit_id: uuid.UUID) -> schema.IProductMeasuringUnitIn:
+async def get_measurement(unit_id: uuid.UUID) -> schema.IProductMeasuringUnitOut:
     return await service.get(unit_id=unit_id)
 
 
 @router.put(
     "/{unit_id}",
-    response_model=schema.IProductMeasuringUnitIn,
+    response_model=schema.IProductMeasuringUnitOut,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
 async def update_measurement(
     unit_id: uuid.UUID, measurement: schema.IProductMeasuringUnitIn
-) -> schema.IProductMeasuringUnitIn:
+) -> schema.IProductMeasuringUnitOut:
     return await service.update(unit_id=unit_id, data_in=measurement)
 
 

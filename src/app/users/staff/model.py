@@ -2,6 +2,7 @@ from lib.db.primary_key import Base, sa
 from sqlalchemy.orm import relationship
 from lib.utils.password_hasher import Hasher
 from lib.utils.random_string import random_str
+from src.app.users.user.abstract import BaseUser
 
 
 staff_role_association_table = sa.Table(
@@ -28,16 +29,9 @@ staff_role_association_table = sa.Table(
 )
 
 
-class Staff(Base):
+class Staff(BaseUser):
     __tablename__ = "staff"
     aud = sa.Column(sa.String(8), default=lambda: f"ST-{random_str(5)}")
-    firstname = sa.Column(sa.String(20))
-    lastname = sa.Column(sa.String(20))
-    email = sa.Column(sa.String(50), unique=True)
-    password = sa.Column(sa.String)
-    is_verified = sa.Column(sa.Boolean, default=False)
-    is_suspended = sa.Column(sa.Boolean, default=False)
-    is_active = sa.Column(sa.Boolean, default=False)
     password_reset_token = sa.Column(sa.String, default=None)
     tel = sa.Column(sa.String(17))
     permissions = relationship(
