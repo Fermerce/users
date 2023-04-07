@@ -1,9 +1,9 @@
 from fastapi import Depends
 from lib.shared.dependency import AppAuth, AppWrite
 from src.app.users.staff.model import Staff
-from src.app.users.staff.query import staff_query
+from src.app.users.staff.repository import staff_repo
 
-__staff_write = AppWrite(model=Staff, model_query=staff_query)
+__staff_write = AppWrite(model=Staff, model_repo=staff_repo)
 
 
 async def get_permissions(get_user: dict = Depends(AppAuth.authenticate)):
