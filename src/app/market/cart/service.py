@@ -6,7 +6,7 @@ from src.base.enum.sort_type import SortOrder
 from src.lib.errors import error
 from src.app.cart import schema, model
 from src.app.cart.repository import cart_repo
-from src.app.product.repository import product_property_repo, product_repo
+from src.app.products.repository import product_property_repo, product_repo
 from src.app.cart import validate
 
 

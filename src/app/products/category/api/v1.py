@@ -2,39 +2,39 @@ import typing as t
 import uuid
 from fastapi import APIRouter, Depends, Query, status
 from core.schema.response import ITotalCount
-from src.app.product.measuring_unit import schema, service
+from src.app.products.category import schema, service
 from core.enum.sort_type import SortOrder
 from src.app.users.staff.dependency import require_super_admin_or_admin
 
 
-router = APIRouter(prefix="/measurements", tags=["Product measuring unit"])
+router = APIRouter(prefix="/categories", tags=["Product Category"])
 
 
 @router.post(
     "/",
-    # response_model=schema.IProductMeasuringUnitIn,
+    # response_model=schema.IProductCategoryIn,
     status_code=status.HTTP_201_CREATED,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def create_measurement(
-    data_in: schema.IProductMeasuringUnitIn,
-) -> schema.IProductMeasuringUnitOut:
+async def create_permission(
+    data_in: schema.IProductCategoryIn,
+) -> schema.IProductCategoryOut:
     return await service.create(data_in=data_in)
 
 
 @router.get(
     "/",
-    response_model=list[schema.IProductMeasuringUnitOut],
+    response_model=list[schema.IProductCategoryOut],
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_measurement_list(
+async def get_permission_list(
     filter: t.Optional[str] = Query(
         default="", alias="filter", description="filter all shipping_address"
     ),
     select: t.Optional[str] = Query(
         default="",
         alias="select",
-        description="specific attributes of the measurements",
+        description="specific attributes of the categories",
     ),
     per_page: int = 10,
     page: int = 1,
@@ -56,23 +56,25 @@ async def get_measurement_list(
 
 
 @router.get(
-    "/{unit_id}",
-    # response_model=schema.IProductMeasuringUnitIn,
+    "/{product_category_id}",
+    # response_model=schema.IProductCategoryOut,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_measurement(unit_id: uuid.UUID) -> schema.IProductMeasuringUnitOut:
-    return await service.get(unit_id=unit_id)
+async def get_permission(product_category_id: uuid.UUID) -> schema.IProductCategoryOut:
+    return await service.get(product_category_id=product_category_id)
 
 
 @router.put(
-    "/{unit_id}",
-    response_model=schema.IProductMeasuringUnitOut,
+    "/{product_category_id}",
+    response_model=schema.IProductCategoryOut,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def update_measurement(
-    unit_id: uuid.UUID, measurement: schema.IProductMeasuringUnitIn
-) -> schema.IProductMeasuringUnitOut:
-    return await service.update(unit_id=unit_id, data_in=measurement)
+async def update_permission(
+    product_category_id: uuid.UUID, permission: schema.IProductCategoryIn
+) -> schema.IProductCategoryOut:
+    return await service.update(
+        product_category_id=product_category_id, data_in=permission
+    )
 
 
 @router.get(
@@ -80,7 +82,7 @@ async def update_measurement(
     response_model=ITotalCount,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_total_measurement() -> t.Optional[ITotalCount]:
+async def get_total_permission() -> t.Optional[ITotalCount]:
     return await service.get_total_count()
 
 
@@ -89,14 +91,14 @@ async def get_total_measurement() -> t.Optional[ITotalCount]:
     # response_model=int,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def get_total_measurement():
+async def get_total_permission():
     return await service.example()
 
 
 @router.delete(
-    "/{unit_id}",
+    "/{product_category_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     # dependencies=[Depends(require_super_admin_or_admin)],
 )
-async def delete_measurement(unit_id: uuid.UUID) -> None:
-    return await service.delete(unit_id=unit_id)
+async def delete_permission(product_category_id: uuid.UUID) -> None:
+    return await service.delete(product_category_id=product_category_id)

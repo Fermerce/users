@@ -1,5 +1,5 @@
 from core.repository.base import BaseRepository
-from src.app.product.category import model
+from src.app.products.category import model
 
 
 class ProductCategoryRepository(BaseRepository[model.ProductCategory,]):

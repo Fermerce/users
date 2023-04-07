@@ -1,7 +1,7 @@
 import typing as t
 import uuid
 import pydantic as pyd
-from src.app.product.product import schema as product_schema
+from src.app.products.product import schema as product_schema
 
 
 class ICartIn(pyd.BaseModel):

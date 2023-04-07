@@ -2,7 +2,7 @@ import typing as t
 from uuid import UUID
 import sqlalchemy as sa
 from lib.errors import error
-from src.app.product.product.model import Product
+from src.app.products.product.model import Product
 from src.app.users.user.model import User
 from core.repository.base import BaseRepository
 from src.app.market.cart import model, schema

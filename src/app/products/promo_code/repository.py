@@ -1,5 +1,5 @@
 from core.repository.base import BaseRepository
-from src.app.product.promo_code import model
+from src.app.products.promo_code import model
 
 
 class ProductPromoCodeRepository(BaseRepository[model.ProductPromoCode,]):

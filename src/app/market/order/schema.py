@@ -5,7 +5,7 @@ import pydantic as pyd
 from src.app.market.payment import schema as payment_schema
 from src.app.users.address import schema as address_schema
 from src.app.users.user import schema as user_schema
-from src.app.product.product import schema as product_schema
+from src.app.products.product import schema as product_schema
 
 
 class IOrderInfo(pyd.BaseModel):

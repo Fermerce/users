@@ -5,9 +5,9 @@ from core.enum.sort_type import SortOrder
 from core.schema.response import ITotalCount
 from lib.db.config import Async_session
 from lib.errors import error
-from src.app.product.promo_code import schema, model
+from src.app.products.promo_code import schema, model
 from fastapi import Response
-from src.app.product.promo_code.repository import product_promo_code_repo
+from src.app.products.promo_code.repository import product_promo_code_repo
 from sqlalchemy import select
 
 

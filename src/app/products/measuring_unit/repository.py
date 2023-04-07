@@ -1,5 +1,5 @@
 from core.repository.base import BaseRepository
-from src.app.product.measuring_unit import model
+from src.app.products.measuring_unit import model
 
 
 class ProductMeasuringUnitRepository(BaseRepository[model.ProductMeasuringUnit,]):

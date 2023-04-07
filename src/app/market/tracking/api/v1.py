@@ -1,6 +1,6 @@
 import uuid
 from fastapi import APIRouter, status
-from src.app.product import service
+from src.app.products import service
 
 
 router = APIRouter(prefix="/trackings", tags=["Tracking"])
