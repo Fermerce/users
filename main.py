@@ -29,8 +29,8 @@ def get_application():
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    _app.middleware("http")(exclude_keys_middleware(["password"]))
-    _app.middleware("http")(response_data_transformer)
+    # _app.middleware("http")(exclude_keys_middleware(["password"]))
+    # _app.middleware("http")(response_data_transformer)
 
     return _app
 

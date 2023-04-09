@@ -1,12 +1,10 @@
 import typing as t
 import uuid
-from fastapi import Request, status
+from fastapi import status
 from fastapi import Response
-from core.enum.sort_type import SearchType, SortOrder
+from core.enum.sort_type import SortOrder
 from core.schema.response import ITotalCount, IResponseMessage
-from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
-from fastapi.security.oauth2 import OAuth2PasswordRequestForm
-from src.app.auth import service as auth_service
+from src.app.users.auth.schema import ICheckUserEmail
 from src.app.users.permission.model import Permission
 from lib.errors import error
 from src.app.users.user import schema, model
@@ -17,27 +15,27 @@ from lib.utils import security
 
 
 async def create(data_in=schema.IUserIn):
-    check_customer = await users_repo.get_by_attr(
+    check_user = await users_repo.get_by_attr(
         attr=dict(email=data_in.email), first=True
     )
-    if check_customer:
+    if check_user:
         raise error.DuplicateError("Account already exist")
     else:
-        check_customer = await users_repo.get_by_attr(
+        check_user = await users_repo.get_by_attr(
             attr=dict(username=data_in.username), first=True
         )
-        if check_customer:
+        if check_user:
             raise error.DuplicateError("Account with this username already exist")
-    new_customer = await users_repo.create(data_in)
+    new_user = await users_repo.create(data_in)
 
-    if new_customer:
+    if new_user:
         await tasks.send_users_activation_email.kiq(
             dict(
-                email=new_customer.email,
-                id=str(new_customer.id),
-                full_name=f"{new_customer.firstname} {new_customer.lastname}"
-                if new_customer.firstname and new_customer.lastname
-                else new_customer.username,
+                email=new_user.email,
+                id=str(new_user.id),
+                full_name=f"{new_user.firstname} {new_user.lastname}"
+                if new_user.firstname and new_user.lastname
+                else new_user.username,
             )
         )
         get_permission = await permission_repo.get_by_attr(
@@ -49,7 +47,7 @@ async def create(data_in=schema.IUserIn):
                 dict(name="user"), expunge=False
             )
         await users_repo.add_users_permission(
-            users_id=new_customer.id, permission_objs=[get_permission]
+            users_id=new_user.id, permission_objs=[get_permission]
         )
         return IResponseMessage(
             message="Account was created successfully, check your email to activate your account"
@@ -58,23 +56,23 @@ async def create(data_in=schema.IUserIn):
 
 
 async def update_user_details(data_in=schema.IUserUpdateIn):
-    check_customer = await users_repo.get(id=data_in.id)
-    if not check_customer:
+    check_user = await users_repo.get(id=data_in.id)
+    if not check_user:
         raise error.NotFoundError("Account does not exist")
-    if data_in.email and check_customer.email != data_in.email:
+    if data_in.email and check_user.email != data_in.email:
         check_existing_email = await users_repo.get_by_attr(
-            attr=dict(email=check_customer.email), first=True
+            attr=dict(email=check_user.email), first=True
         )
-        if str(check_existing_email.id) != check_customer.id:
+        if str(check_existing_email.id) != check_user.id:
             raise error.BadDataError("Account with this email already exists")
-    elif data_in.username and data_in.username != check_customer.username:
+    elif data_in.username and data_in.username != check_user.username:
         check_username = await users_repo.get_by_attr(
-            attr=dict(email=check_customer.email), first=True
+            attr=dict(email=check_user.email), first=True
         )
-        if str(check_username.id) != check_customer.id:
+        if str(check_username.id) != check_user.id:
             raise error.BadDataError("Account with this username already exists")
     users_update = await users_repo.update(
-        user=check_customer,
+        user=check_user,
         obj=data_in.dict(exclude={"id"}, exclude_unset=True),
     )
 
@@ -110,7 +108,7 @@ async def filter(
     is_active: bool = False,
     load_related: bool = False,
 ) -> t.List[model.User]:
-    get_customers = await users_repo.filter(
+    get_users = await users_repo.filter(
         filter_string=filter,
         per_page=per_page,
         page=page,
@@ -121,7 +119,7 @@ async def filter(
         strict_search=dict(is_active=is_active),
     )
 
-    return get_customers
+    return get_users
 
 
 async def verify_users_email(
@@ -229,12 +227,12 @@ async def remove_users_data(data_in: schema.IUserRemove) -> None:
     raise error.NotFoundError(f"User with  user id {data_in.users_id} does not exist")
 
 
-async def get_total_customers():
+async def get_total_users():
     total_count = await users_repo.get_count()
     return ITotalCount(count=total_count).dict()
 
 
-async def get_customer(users_id: uuid.UUID, load_related: bool = False) -> model.User:
+async def get_user(users_id: uuid.UUID, load_related: bool = False) -> model.User:
     if not users_id:
         raise error.NotFoundError(
             f"User with  user id {users_id} does not exist",
@@ -250,69 +248,6 @@ async def get_customer(users_id: uuid.UUID, load_related: bool = False) -> model
     raise error.NotFoundError(
         f"User with id {users_id} does not exist",
     )
-
-
-async def get_users_permissions(users_id: uuid.UUID) -> t.List[Permission]:
-    use_detail = await users_repo.get(users_id, load_related=True)
-    if use_detail:
-        return use_detail.permissions
-    raise error.NotFoundError(
-        f"User with id {users_id} does not exist",
-    )
-
-
-async def add_users_permissions(
-    data_in: schema.IUserRoleUpdate,
-) -> IResponseMessage:
-    get_per = await permission_repo.get_by_props(
-        prop_name="id", prop_values=data_in.permissions
-    )
-    if not get_per:
-        raise error.NotFoundError("permission not found")
-    update_customer = await users_repo.add_users_permission(
-        users_id=data_in.users_id,
-        permission_objs=get_per,
-    )
-    if update_customer:
-        return IResponseMessage(message=" user permission was updated successfully")
-
-
-async def remove_users_permissions(
-    data_in: schema.IUserRoleUpdate,
-) -> IResponseMessage:
-    check_perm = await permission_repo.get_by_ids(data_in.permissions)
-    if not check_perm:
-        raise error.NotFoundError(detail="Permission not found")
-    await users_repo.remove_users_permission(
-        users_id=data_in.users_id, permission_objs=check_perm
-    )
-    return IResponseMessage(message="User permission was updated successfully")
-
-
-async def login(
-    request: Request, data_in: OAuth2PasswordRequestForm
-) -> t.Union[IToken, IResponseMessage]:
-    check_user = await users_repo.get_by_attr(
-        attr=dict(username=data_in.username, email=data_in.username),
-        first=True,
-        search_mode=SearchType._or,
-    )
-    if not check_user:
-        raise error.UnauthorizedError(detail="incorrect email or password")
-    if not check_user.check_password(data_in.password):
-        raise error.UnauthorizedError(detail="incorrect email or password")
-    if not check_user.is_verified:
-        await tasks.send_users_activation_email.kiq(
-            dict(email=data_in.username, id=str(check_user.id))
-        )
-        return IResponseMessage(
-            message="Your is not verified, Please check your for verification link before continuing"
-        )
-    return await auth_service.auth_login(request=request, user_id=str(check_user.id))
-
-
-async def login_token_refresh(data_in: IRefreshToken, request: Request) -> IToken:
-    return await auth_service.auth_login_token_refresh(data_in=data_in, request=request)
 
 
 async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:

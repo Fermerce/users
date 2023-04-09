@@ -61,7 +61,7 @@ async def send_users_password_reset_link(user: dict):
         token = security.JWTAUTH.data_encoder(
             data={"user_id": user_id}, duration=timedelta(days=1)
         )
-        users_repo.update(user=get_user, obj={"password_reset_token": token})
+        users_repo.update(user=get_user, obj={"reset_token": token})
         url = f"{config.project_url}/auth/passwordReset?reset_token={token}&auth_type= user"
 
         mail_template_context = {

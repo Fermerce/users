@@ -7,7 +7,7 @@ class BaseUser(Base):
     __abstract__ = True
     firstname = sa.Column(sa.String(20), nullable=True)
     lastname = sa.Column(sa.String(20), nullable=True)
-    username = sa.Column(sa.String(30), default=lambda: f"FM-{random_str(5)}")
+    username = sa.Column(sa.String(30), default=lambda: f"fm-{random_str(5)}")
     email = sa.Column(sa.String(50), unique=True)
     password = sa.Column(sa.String)
     is_verified = sa.Column(sa.Boolean, default=False)

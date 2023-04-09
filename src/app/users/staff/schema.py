@@ -5,55 +5,14 @@ import pydantic as pyd
 from src.app.users.permission import schema as perm_schema
 
 
-class IBaseStaff(pyd.BaseModel):
-    firstname: pyd.constr(
-        strip_whitespace=True,
-        to_lower=True,
-        max_length=15,
-        min_length=2,
-    )
-    lastname: pyd.constr(
-        strip_whitespace=True,
-        to_lower=True,
-        max_length=15,
-        min_length=2,
-    )
-    email: pyd.EmailStr
-
-
-class IStaffIn(IBaseStaff):
-    password: pyd.SecretStr
-    tel: pyd.constr(
-        strip_whitespace=True,
-        min_length=11,
-        max_length=14,
-        strict=True,
-    )
+class IStaffIn(pyd.BaseModel):
+    user_id = uuid.UUID
 
     class Config:
-        schema_extra = {
-            "example": {
-                "firstname": "John",
-                "lastname": "Doe",
-                "email": "john@doe.com",
-                "password": "****************",
-                "tel": "08089223577",
-            }
-        }
-
-    @pyd.validator("tel", pre=True)
-    def validate_phone_number(cls, v):
-        phone_number_regex = r"^\+?234(7[01]|8[01]|9[01])\d{8}$"
-        if not v:
-            raise ValueError("Phone number is required")
-        if not re.match(phone_number_regex, v):
-            raise ValueError("Phone number must be 11 or 15 digits")
-        if v.startswith("234"):
-            v = f"+{v}"
-        return v
+        schema_extra = {"example": {"user_id": uuid.UUID}}
 
 
-class IStaffOut(IBaseStaff):
+class IStaffOut(pyd.BaseModel):
     id: uuid.UUID
     tel: str
 
@@ -62,10 +21,10 @@ class IStaffOut(IBaseStaff):
         schema_extra = {
             "example": {
                 "firstname": "John",
+                "aud": "st-vguytt",
                 "lastname": "Doe",
                 "email": "john@doe.com",
                 "password": "****************",
-                "tel": "08089223577 or +234",
                 "permissions": [
                     {
                         "name": "admin",
@@ -78,7 +37,7 @@ class IStaffOut(IBaseStaff):
         }
 
 
-class IStaffOutFull(IBaseStaff):
+class IStaffOutFull(pyd.BaseModel):
     id: uuid.UUID
     tel: str
     permissions: t.Optional[t.List[perm_schema.IPermissionOut]] = []

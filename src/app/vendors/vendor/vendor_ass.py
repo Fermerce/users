@@ -1,0 +1,68 @@
+from lib.db.primary_key import Base, sa
+
+vendor_state_association = sa.Table(
+    "vendor_state_ass",
+    Base.metadata,
+    sa.Column(
+        "vendor_id",
+        sa.ForeignKey(
+            "vendor.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+    sa.Column(
+        "state_id",
+        sa.ForeignKey(
+            "state.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+)
+vendor_country_association = sa.Table(
+    "vendor_country_ass",
+    Base.metadata,
+    sa.Column(
+        "vendor_id",
+        sa.ForeignKey(
+            "vendor.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+    sa.Column(
+        "country_id",
+        sa.ForeignKey(
+            "country.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+)
+vendor_media_association = sa.Table(
+    "vendor_media_ass",
+    Base.metadata,
+    sa.Column(
+        "vendor_id",
+        sa.ForeignKey(
+            "vendor.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+    sa.Column(
+        "media_id",
+        sa.ForeignKey(
+            "media.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+)
