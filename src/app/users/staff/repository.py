@@ -84,18 +84,6 @@ class StaffRepository(BaseRepository[model.Staff]):
         await self.db.refresh(staff)
         return staff
 
-    async def get_by_email(self, email: str) -> model.Staff:
-        staff = await super().get_by_attr(attr=dict(email=email), first=True)
-        return staff
-
-    async def update_password(
-        self, staff: model.Staff, obj: schema.IStaffResetPassword
-    ) -> model.Staff:
-        str_pass = obj.password.get_secret_value()
-        staff.password = staff.generate_hash(str_pass)
-        self.db.add(staff)
-        await self.db.commit()
-        return staff
 
     async def activate(self, staff: model.Staff, mode: bool = True) -> model.Staff:
         staff.is_active = mode

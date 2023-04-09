@@ -53,4 +53,4 @@ class AuthTokeRepository(BaseRepository[model.AuthToken]):
         return await super().get_by_attr(ip_address=ip_address)
 
 
-auth_token_query = AuthTokeRepository()
+auth_token_repo = AuthTokeRepository()

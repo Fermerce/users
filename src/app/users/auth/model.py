@@ -1,12 +1,9 @@
-import ormar
-from lib.db import model
+from lib.db.primary_key import Base, sa, GUID
 
 
-class AuthToken(model.BaseModel):
-    class Meta(model.BaseMeta):
-        tablename = "auth_token"
-
-    refresh_token: str = ormar.String(max_length=255, nullable=True)
-    access_token: str = ormar.String(max_length=255, nullable=True)
-    aud: str = ormar.UUID(uuid_format="string")
-    ip_address: str = ormar.String(max_length=24)
+class AuthToken(Base):
+    __tablename__ = "auth_token"
+    refresh_token = sa.Column(sa.String, nullable=True)
+    access_token = sa.Column(sa.String, nullable=True)
+    aud = sa.Column(GUID, nullable=False)
+    ip_address = sa.Column(sa.String(24))

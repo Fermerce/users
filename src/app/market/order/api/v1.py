@@ -3,15 +3,13 @@ from fastapi import APIRouter, Depends, Query, status
 from src.app.market.order import schema, service
 from src.app.users.user.model import User
 from core.enum.sort_type import SortOrder
-from src.app.users.user.dependency import require_customer
+from src.app.users.user.dependency import require_user
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_order(
-    data_in: schema.IOrderIn, user: User = Depends(require_customer)
-):
+async def create_order(data_in: schema.IOrderIn, user: User = Depends(require_user)):
     return await service.create(data_in=data_in, user=user)
 
 
@@ -34,7 +32,7 @@ async def get_user_orders(
         default="id", description="order by attribute, e.g. id"
     ),
     load_related: bool = False,
-    user: User = Depends(require_customer),
+    user: User = Depends(require_user),
 ):
     return await service.get_orders(
         filter=filter,
@@ -49,10 +47,10 @@ async def get_user_orders(
 
 
 @router.get("/{order_id}")
-async def get_order(order_id: str, user: User = Depends(require_customer)):
+async def get_order(order_id: str, user: User = Depends(require_user)):
     return await service.get_order(order_id=order_id, user=user)
 
 
 @router.get("/{order_id}/items")
-async def get_order_items(order_id: str, user: User = Depends(require_customer)):
+async def get_order_items(order_id: str, user: User = Depends(require_user)):
     return await service.get_order_items(order_id=order_id, user=user)

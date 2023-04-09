@@ -1,7 +1,7 @@
 import typing as t
 import uuid
 from fastapi import APIRouter, Depends, Query, Response, status
-from src.app.users.user.dependency import require_customer
+from src.app.users.user.dependency import require_user
 from src.app.users.shipping_address import schema, service
 from src.app.users.user.model import User
 
@@ -19,7 +19,7 @@ router = APIRouter(
 )
 async def create_address(
     data_in: schema.IAddressIn,
-    user: User = Depends(require_customer),
+    user: User = Depends(require_user),
 ):
     return await service.create(data_in=data_in, user=user)
 
@@ -38,7 +38,7 @@ async def get_address_list(
         alias="select",
         description="select specific attribute",
     ),
-    user: User = Depends(require_customer),
+    user: User = Depends(require_user),
     per_page: int = 10,
     page: int = 1,
 ):
@@ -54,7 +54,7 @@ async def get_address_list(
 )
 async def get_address(
     address_id: uuid.UUID,
-    user: User = Depends(require_customer),
+    user: User = Depends(require_user),
 ):
     return await service.get(address_id=address_id, user=user)
 
@@ -67,14 +67,14 @@ async def get_address(
 async def update_address(
     address_id: uuid.UUID,
     data_in: schema.IAddressIn,
-    user: User = Depends(require_customer),
+    user: User = Depends(require_user),
 ):
     return await service.update(address_id=address_id, data_in=data_in, user=user)
 
 
 @router.get("/total/count", response_model=dict)
 async def get_total_address(
-    user: User = Depends(require_customer),
+    user: User = Depends(require_user),
 ) -> t.Optional[int]:
     return await service.get_total_count(user)
 
@@ -82,6 +82,6 @@ async def get_total_address(
 @router.delete("/{address_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_address(
     address_id: uuid.UUID,
-    user: User = Depends(require_customer),
+    user: User = Depends(require_user),
 ) -> Response:
     return await service.delete(address_id, user)

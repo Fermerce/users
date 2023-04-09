@@ -29,7 +29,11 @@ class Order(Base):
     status_id = sa.Column(
         GUID, sa.ForeignKey("status.id", ondelete="SET NULL"), nullable=True
     )
-    status = relationship("Status", foreign_keys=[status_id])
+    delivery_mode_id = sa.Column(
+        "OrderDeliveryMode", sa.ForeignKey("delivery_mode.id", ondelete="SET NULL")
+    )
+    delivery_mode = relationship("OrderDeliveryMode", back_populates="orders")
+    status = relationship("Status", back_populates="orders")
     items = relationship("OrderItem", back_populates="order")
 
 
@@ -38,6 +42,6 @@ class OrderItem(Base):
     quantity = sa.Column(sa.Integer, default=0)
     is_delivered = sa.Column(sa.Boolean, default=False)
     product_id = sa.Column(GUID, sa.ForeignKey("product.id"))
-    product = relationship("Product", foreign_keys=[product_id])
+    product = relationship("Product", sa.ForeignKey("product.id"))
     order_id = sa.Column(GUID, sa.ForeignKey("order.id", ondelete="CASCADE"))
     order = relationship("Order", back_populates="order")

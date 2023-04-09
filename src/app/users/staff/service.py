@@ -1,20 +1,15 @@
 import typing as t
 import uuid
-from fastapi import Request, status
+from fastapi import status
 from fastapi import Response
 from core.enum.sort_type import SortOrder
 from core.schema.response import ITotalCount, IResponseMessage
-from src.taskiq.user.tasks import send_users_activation_email
 from src.app.users.permission.model import Permission
 from lib.errors import error
 from src.app.users.staff import schema, model
 from src.app.users.staff.repository import staff_repo
 from src.taskiq.staff import tasks
 from src.app.users.permission.repository import permission_repo
-from lib.utils import security
-from src.app.auth.schema import ICheckUserEmail, IRefreshToken, IToken
-from fastapi.security.oauth2 import OAuth2PasswordRequestForm
-from src.app.auth import service as auth_service
 
 
 async def create(
@@ -58,87 +53,6 @@ async def filter(
     return get_staff
 
 
-async def verify_staff_email(
-    staff_token: schema.IStaffAccountVerifyToken,
-) -> IResponseMessage:
-    data: dict = security.JWTAUTH.data_decoder(encoded_data=staff_token.token)
-    if not data.get("staff_id", None):
-        raise error.BadDataError("Invalid token data")
-    staff_obj = await staff_repo.get(data.get("staff_id", None))
-    if staff_obj and staff_obj.is_verified:
-        raise error.BadDataError(
-            detail="Account has been already verified",
-        )
-    staff_obj = await staff_repo.activate(staff_obj)
-    if staff_obj:
-        return IResponseMessage(message="Account was verified successfully")
-    raise error.ServerError(
-        "couldn't activate account, please try again later. if error is persists please contact us"
-    )
-
-
-async def reset_password_link(
-    staff_data: schema.IStaffGetPasswordResetLink,
-) -> IResponseMessage:
-    staff_obj = await staff_repo.get_by_email(email=staff_data.email)
-    if not staff_obj:
-        raise error.NotFoundError("Staff not found")
-    await tasks.send_staff_password_reset_link.kiq(
-        dict(
-            email=staff_obj.email,
-            id=str(staff_obj.id),
-            full_name=f"{staff_obj.firstname} {staff_obj.lastname}",
-        )
-    )
-    return IResponseMessage(
-        message="Password reset token has been sent to your email, link expire after 24 hours"
-    )
-
-
-async def update_staff_password(
-    staff_data: schema.IStaffResetPassword,
-) -> IResponseMessage:
-    token_data: dict = security.JWTAUTH.data_decoder(encoded_data=staff_data.token)
-    if token_data:
-        staff_obj = await staff_repo.get(token_data.get("staff_id", None))
-        if not staff_obj:
-            raise error.NotFoundError("Staff not found")
-        if staff_obj.password_reset_token != staff_data.token:
-            raise error.BadDataError("Authentication failed")
-        if staff_obj.check_password(staff_data.password.get_secret_value()):
-            raise error.BadDataError("Try another password you have not used before")
-        if await staff_repo.update_password(staff_obj, staff_data):
-            await tasks.send_verify_staff_password_reset.kiq(
-                dict(
-                    email=staff_obj.email,
-                    id=str(staff_obj.id),
-                    full_name=f"{staff_obj.firstname} {staff_obj.lastname}",
-                )
-            )
-            return IResponseMessage(message="password was reset successfully")
-    raise error.BadDataError("Invalid token was provided")
-
-
-async def update_staff_password_tno_token(
-    staff_data: schema.IStaffResetPasswordNoToken, staff: model.Staff
-) -> IResponseMessage:
-    staff_obj = await staff_repo.get(staff.id)
-    if not staff_obj:
-        raise error.NotFoundError("Staff not found")
-    if staff_obj.check_password(staff_data.password.get_secret_value()):
-        raise error.BadDataError("Try another password you have not used before")
-    if await staff_repo.update_password(staff_obj, staff_data):
-        await tasks.send_verify_staff_password_reset.kiq(
-            dict(
-                email=staff_obj.email,
-                id=str(staff_obj.id),
-                full_name=f"{staff_obj.firstname} {staff_obj.lastname}",
-            )
-        )
-        return IResponseMessage(message="password was reset successfully")
-    raise error.BadDataError("Invalid token was provided")
-
-
 async def remove_staff_data(data_in: schema.IRemoveStaff) -> None:
     staff_to_remove = await staff_repo.get(data_in.staff_id)
     if staff_to_remove:
@@ -147,7 +61,7 @@ async def remove_staff_data(data_in: schema.IRemoveStaff) -> None:
     raise error.NotFoundError(f"Staff with staff_id {data_in.staff_id} does not exist")
 
 
-async def get_staff(
+async def get_staff_details(
     staff_id: str, load_related: bool = False
 ) -> t.Union[schema.IStaffOutFull, schema.IStaffOut]:
     if not staff_id:
@@ -168,17 +82,6 @@ async def get_staff(
 async def get_total_Staffs():
     total_count = await staff_repo.get_count()
     return ITotalCount(count=total_count)
-
-
-async def get_Staff(
-    staff_id: uuid.UUID,
-) -> model.Staff:
-    use_detail = await staff_repo.get(staff_id, load_related=True)
-    if use_detail:
-        return use_detail
-    raise error.NotFoundError(
-        f"Staff with staff_id {staff_id} does not exist",
-    )
 
 
 async def add_staff_permission(
@@ -222,36 +125,3 @@ async def remove_staff_permissions(
         staff_id=get_staff.id, permission_objs=check_perms
     )
     return IResponseMessage(message="Staff role was updated successfully")
-
-
-async def login(
-    request: Request, data_in: OAuth2PasswordRequestForm
-) -> t.Union[IToken, IResponseMessage]:
-    check_staff = await staff_repo.get_by_attr(
-        attr=dict(email=data_in.username), first=True
-    )
-    if not check_staff:
-        raise error.UnauthorizedError(detail="incorrect email or password")
-    if not check_staff.check_password(data_in.password):
-        raise error.UnauthorizedError(detail="incorrect email or password")
-    if not check_staff.is_verified:
-        await send_users_activation_email.kiq(
-            dict(email=data_in.username, id=str(check_staff.id))
-        )
-        return IResponseMessage(
-            message="Your is not verified, Please check your for verification link before continuing"
-        )
-    return await auth_service.auth_login(request=request, user_id=str(check_staff.id))
-
-
-async def login_token_refresh(data_in: IRefreshToken, request: Request) -> IToken:
-    return await auth_service.auth_login_token_refresh(data_in=data_in, request=request)
-
-
-async def check_user_email(data_in: ICheckUserEmail) -> IResponseMessage:
-    check_staff = await staff_repo.get_by_attr(
-        attr=dict(email=data_in.username), first=True
-    )
-    if not check_staff:
-        raise error.NotFoundError()
-    return IResponseMessage(message="Account exists")

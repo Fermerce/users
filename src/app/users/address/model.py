@@ -8,7 +8,7 @@ class ShippingAddress(Base):
     user = relationship("User", back_populates="shipping_address")
     orders = relationship("Order", back_populates="shipping_address")
     street = sa.Column(sa.String(100))
-    phones = sa.Column(sa.String(300))
+    phones = sa.Column(sa.String(500))
     city = sa.Column(sa.String(100))
     state = sa.Column(sa.String(100))
     zipcode = sa.Column(sa.String(10))
