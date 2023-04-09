@@ -3,7 +3,7 @@ from fastapi import APIRouter, Form, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse, FileResponse
 from src.app.medias import schema, service
 from core.settings import config
-from src.base.enum.sort_type import SortOrder
+from core.enum.sort_type import SortOrder
 
 
 router = APIRouter(
@@ -25,7 +25,9 @@ async def update_resource(uri: str, file: UploadFile = Form()):
 
 @router.get("/")
 async def search_resource(
-    filter: t.Optional[str] = Query(default="", alias="filter", description="filter all address"),
+    filter: t.Optional[str] = Query(
+        default="", alias="filter", description="filter all address"
+    ),
     select: t.Optional[str] = Query(
         default="", alias="select", description="specific attributes of the permissions"
     ),
@@ -34,7 +36,9 @@ async def search_resource(
     sort_by: t.Optional[SortOrder] = Query(
         default=SortOrder.desc, description="order by attribute, e.g. id"
     ),
-    order_by: t.Optional[str] = Query(default="id", description="order by attribute, e.g. id"),
+    order_by: t.Optional[str] = Query(
+        default="id", description="order by attribute, e.g. id"
+    ),
     is_active: t.Optional[bool] = True,
 ):
     return await service.filter(
